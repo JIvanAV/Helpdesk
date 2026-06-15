@@ -33,3 +33,60 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 8. Histórico de alterações
 9. Dockerfile e docker-compose
 10. CI com GitHub Actions
+
+## Como rodar o aplicativo no seu PC
+
+### Pré-requisitos
+- Python 3.11+
+- Git
+- (Opcional) Docker para deploy containerizado
+
+### 1. Clone o repositório
+```bash
+git clone https://github.com/JIvanAV/ivan-helpdesk.git
+cd ivan-helpdesk
+```
+
+### 2. Crie e ative o ambiente virtual
+```bash
+# Windows (PowerShell)
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+
+# Linux/macOS / Git Bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Instale as dependências
+```bash
+pip install -e ".[dev]"
+# ou usando uv (mais rápido):
+uv sync --dev
+```
+
+### 4. Rode o backend (API FastAPI)
+```bash
+# Modo desenvolvimento (hot reload)
+cd deploy/desktop/backend
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+Acesse: http://localhost:8000/docs (Swagger UI)
+
+### 5. Rode os testes
+```bash
+# Da raiz do projeto
+pytest -v
+# Com coverage
+pytest --cov=src --cov-report=term-missing
+```
+
+### 6. (Opcional) Build e deploy via Docker
+```bash
+# Da raiz do projeto
+docker compose -f deploy/desktop/docker-compose.yml up --build
+```
+
+---
+
+**Dica:** O backend roda na porta 8000 por padrão. Se precisar mudar, use `--port <outra>` no comando do uvicorn.
