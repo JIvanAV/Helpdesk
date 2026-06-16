@@ -1,7 +1,7 @@
 """Database configuration for Ivan Helpdesk."""
 
 from pathlib import Path
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 # Database file lives in ../data/helpdesk.db relative to this file
@@ -37,3 +37,9 @@ def get_db():
 def init_db() -> None:
     """Create all tables. Call on startup."""
     Base.metadata.create_all(bind=engine)
+
+    # Pequena migração para bancos locais já criados antes deste campo existir.
+    with engine.begin() as conn:
+        columns = [row[1] for row in conn.execute(text("PRAGMA table_info(tickets)"))]
+        if "feedback" not in columns:
+            conn.execute(text("ALTER TABLE tickets ADD COLUMN feedback INTEGER"))
