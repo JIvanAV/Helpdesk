@@ -4,3 +4,13 @@ __pycache__/
 *.pyc
 .env
 .DS_Store
+
+# Local runtime data
+/deploy/desktop/data/*.db
+/deploy/desktop/logs/
+
+# Job-search/debug artifacts kept out of portfolio commits
+/debug_*.html
+/debug_*.py
+/job_search*.py
+/jobs_result.json
