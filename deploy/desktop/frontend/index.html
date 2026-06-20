@@ -93,6 +93,10 @@
           </div>
           <div class="flex flex-col gap-2 sm:flex-row">
             <input class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="searchTerm" @input.debounce.350ms="loadTickets()" placeholder="Buscar chamado..." />
+            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="sortOrder" @change="loadTickets()">
+              <option value="recent">Mais recentes</option>
+              <option value="priority">Prioridade primeiro</option>
+            </select>
             <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="statusFilter" @change="loadTickets()">
               <option value="">Todos os status</option>
               <option value="aberto">Aberto</option>
@@ -144,6 +148,7 @@
         stats: { total: 0, open: 0, by_status: {}, by_priority: {}, by_category: {} },
         statusFilter: '',
         searchTerm: '',
+        sortOrder: 'recent',
         form: {
           title: '',
           description: '',
@@ -164,7 +169,7 @@
         async init() { await this.loadAll(); },
         async loadAll() { await Promise.all([this.loadTickets(), this.loadStats()]); },
         async loadTickets() {
-          const params = new URLSearchParams({ page_size: 50 });
+          const params = new URLSearchParams({ page_size: 50, sort: this.sortOrder });
           if (this.statusFilter) params.set('status', this.statusFilter);
           if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
           const res = await fetch('/tickets?' + params.toString());

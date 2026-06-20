@@ -95,6 +95,7 @@ def list_tickets(
     priority: str | None = Query(None, description="Filtrar por prioridade"),
     requester_email: str | None = Query(None, description="Filtrar por email do solicitante"),
     search: str | None = Query(None, min_length=2, description="Buscar em título, descrição, nome ou email"),
+    sort: str = Query("recent", pattern="^(recent|priority)$", description="Ordenar por recent ou priority"),
     service: TicketService = Depends(get_ticket_service),
 ):
     """Listar chamados com paginação e filtros."""
@@ -106,6 +107,7 @@ def list_tickets(
         priority=priority,
         requester_email=requester_email,
         search=search,
+        sort=sort,
     )
 
 

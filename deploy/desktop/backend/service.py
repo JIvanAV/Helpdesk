@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func, or_
+from sqlalchemy import desc, func, or_, case
 
 from models import Ticket
 from schemas import TicketCreate, TicketUpdate, TicketListResponse
@@ -67,8 +67,9 @@ class TicketService:
         priority: Optional[str] = None,
         requester_email: Optional[str] = None,
         search: Optional[str] = None,
+        sort: str = "recent",
     ) -> TicketListResponse:
-        """List tickets with filters and pagination."""
+        """List tickets with filters, sorting and pagination."""
         query = self.db.query(Ticket)
 
         if status:
@@ -91,8 +92,23 @@ class TicketService:
             )
 
         total = query.count()
+
+        if sort == "priority":
+            priority_order = case(
+                (Ticket.priority == "critica", 0),
+                (Ticket.priority == "alta", 1),
+                (Ticket.priority == "media", 2),
+                (Ticket.priority == "baixa", 3),
+                else_=4,
+            )
+            query = query.order_by(priority_order, desc(Ticket.created_at))
+        elif sort == "recent":
+            query = query.order_by(desc(Ticket.created_at))
+        else:
+            raise ValueError("Ordenação inválida. Use: recent ou priority")
+
         tickets = (
-            query.order_by(desc(Ticket.created_at))
+            query
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()

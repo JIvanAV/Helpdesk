@@ -109,3 +109,33 @@ def test_ticket_search_filter_matches_title_and_requester_email():
     email_payload = email_response.json()
     assert email_payload["total"] >= 1
     assert any(ticket["requester_email"] == "carlos.ops@example.com" for ticket in email_payload["tickets"])
+
+
+def test_ticket_priority_sort_orders_urgent_items_first():
+    cases = [
+        ("baixa", "Ordenacao urgente baixa"),
+        ("critica", "Ordenacao urgente critica"),
+        ("media", "Ordenacao urgente media"),
+        ("alta", "Ordenacao urgente alta"),
+    ]
+
+    for priority, title in cases:
+        response = client.post(
+            "/tickets",
+            json={
+                "title": title,
+                "description": "Chamado usado para validar ordenação por prioridade no dashboard.",
+                "category": "software",
+                "priority": priority,
+                "requester_name": "QA Portfolio",
+                "requester_email": f"qa.{priority}@example.com",
+            },
+        )
+        assert response.status_code == 201
+
+    response = client.get("/tickets?search=Ordenacao%20urgente&sort=priority&page_size=10")
+
+    assert response.status_code == 200
+    payload = response.json()
+    ordered_priorities = [ticket["priority"] for ticket in payload["tickets"][:4]]
+    assert ordered_priorities == ["critica", "alta", "media", "baixa"]
