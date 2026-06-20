@@ -105,6 +105,13 @@
               <option value="access">Acesso</option>
               <option value="other">Outro</option>
             </select>
+            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="priorityFilter" @change="loadTickets()" aria-label="Filtrar por prioridade">
+              <option value="">Todas as prioridades</option>
+              <option value="critica">Crítica</option>
+              <option value="alta">Alta</option>
+              <option value="media">Média</option>
+              <option value="baixa">Baixa</option>
+            </select>
             <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="statusFilter" @change="loadTickets()">
               <option value="">Todos os status</option>
               <option value="aberto">Aberto</option>
@@ -112,6 +119,7 @@
               <option value="resolvido">Resolvido</option>
               <option value="fechado">Fechado</option>
             </select>
+            <button class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800" @click="clearFilters()" type="button">Limpar filtros</button>
           </div>
         </div>
 
@@ -156,6 +164,7 @@
         stats: { total: 0, open: 0, by_status: {}, by_priority: {}, by_category: {} },
         statusFilter: '',
         categoryFilter: '',
+        priorityFilter: '',
         searchTerm: '',
         sortOrder: 'recent',
         form: {
@@ -181,6 +190,7 @@
           const params = new URLSearchParams({ page_size: 50, sort: this.sortOrder });
           if (this.statusFilter) params.set('status', this.statusFilter);
           if (this.categoryFilter) params.set('category', this.categoryFilter);
+          if (this.priorityFilter) params.set('priority', this.priorityFilter);
           if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
           const res = await fetch('/tickets?' + params.toString());
           const data = await res.json();
@@ -189,6 +199,14 @@
         async loadStats() {
           const res = await fetch('/stats');
           this.stats = await res.json();
+        },
+        async clearFilters() {
+          this.searchTerm = '';
+          this.sortOrder = 'recent';
+          this.categoryFilter = '';
+          this.priorityFilter = '';
+          this.statusFilter = '';
+          await this.loadTickets();
         },
         async createTicket() {
           this.loading = true;

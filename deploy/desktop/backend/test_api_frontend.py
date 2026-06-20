@@ -37,6 +37,9 @@ def test_home_serves_spa_frontend():
     assert "Novo chamado" in response.text
     assert "Todas as categorias" in response.text
     assert "categoryFilter" in response.text
+    assert "Todas as prioridades" in response.text
+    assert "priorityFilter" in response.text
+    assert "Limpar filtros" in response.text
     assert "helpdeskApp" in response.text
 
 
@@ -149,6 +152,43 @@ def test_ticket_category_filter_returns_only_selected_category():
     assert all(ticket["category"] == "hardware" for ticket in payload["tickets"])
     assert any(ticket["requester_email"] == "ana.hardware@example.com" for ticket in payload["tickets"])
     assert not any(ticket["requester_email"] == "bruno.software@example.com" for ticket in payload["tickets"])
+
+
+def test_ticket_priority_filter_returns_only_selected_priority():
+    run_marker = f"Filtro prioridade {uuid4().hex[:8]}"
+    high = client.post(
+        "/tickets",
+        json={
+            "title": f"{run_marker} alta",
+            "description": "Chamado importante usado para validar filtro de prioridade no dashboard.",
+            "category": "software",
+            "priority": "alta",
+            "requester_name": "QA Prioridade",
+            "requester_email": f"qa.alta.{run_marker.split()[-1]}@example.com",
+        },
+    )
+    low = client.post(
+        "/tickets",
+        json={
+            "title": f"{run_marker} baixa",
+            "description": "Chamado simples usado como controle negativo do filtro de prioridade.",
+            "category": "software",
+            "priority": "baixa",
+            "requester_name": "QA Prioridade",
+            "requester_email": f"qa.baixa.{run_marker.split()[-1]}@example.com",
+        },
+    )
+
+    assert high.status_code == 201
+    assert low.status_code == 201
+
+    response = client.get(f"/tickets?priority=alta&search={run_marker.replace(' ', '%20')}&page_size=20")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 1
+    assert payload["tickets"][0]["priority"] == "alta"
+    assert payload["tickets"][0]["title"].endswith("alta")
 
 
 def test_ticket_priority_sort_orders_urgent_items_first():
