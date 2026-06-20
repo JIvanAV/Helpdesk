@@ -25,7 +25,7 @@ def test_health_reports_current_version():
     payload = response.json()
     assert payload["status"] == "healthy"
     assert payload["service"] == "ivan-helpdesk"
-    assert payload["version"] == "0.3.0"
+    assert payload["version"] == "0.3.1"
 
 
 def test_home_serves_spa_frontend():
@@ -220,3 +220,55 @@ def test_ticket_priority_sort_orders_urgent_items_first():
     payload = response.json()
     ordered_priorities = [ticket["priority"] for ticket in payload["tickets"]]
     assert ordered_priorities == ["critica", "alta", "media", "baixa"]
+
+
+def test_security_headers_are_applied_to_frontend_and_api():
+    frontend_response = client.get("/")
+    api_response = client.get("/health")
+
+    for response in (frontend_response, api_response):
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["x-frame-options"] == "DENY"
+        assert response.headers["referrer-policy"] == "no-referrer"
+        assert response.headers["permissions-policy"] == "geolocation=(), microphone=(), camera=()"
+
+
+def test_cors_rejects_unknown_origins_and_allows_localhost():
+    blocked = client.options(
+        "/tickets",
+        headers={
+            "Origin": "https://evil.example.com",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    allowed = client.options(
+        "/tickets",
+        headers={
+            "Origin": "http://localhost:8000",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert "access-control-allow-origin" not in blocked.headers
+    assert allowed.headers["access-control-allow-origin"] == "http://localhost:8000"
+
+
+def test_validation_errors_return_safe_generic_payload():
+    response = client.post(
+        "/tickets",
+        json={
+            "title": "Oi",
+            "description": "curta",
+            "category": "software",
+            "priority": "media",
+            "requester_name": "J",
+            "requester_email": "email-invalido",
+        },
+    )
+
+    assert response.status_code == 422
+    payload = response.json()
+    assert payload["error"] == "validation_error"
+    assert payload["detail"] == "Verifique os campos enviados e tente novamente."
+    assert "request_id" in payload
+    assert "email-invalido" not in response.text

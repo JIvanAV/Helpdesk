@@ -23,6 +23,9 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Ordenação por prioridade para destacar chamados críticos
 - Estatísticas de chamados por status, prioridade e categoria
 - Feedback de atendimento em chamados resolvidos/fechados
+- Cabeçalhos de segurança HTTP no frontend e API
+- Tratamento padronizado para erros de validação e falhas internas
+- CORS restrito aos endereços locais usados no demo
 
 ## MVP inicial
 

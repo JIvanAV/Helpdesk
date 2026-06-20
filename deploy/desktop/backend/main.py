@@ -3,10 +3,14 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Depends, HTTPException, Query, status
-from fastapi.responses import FileResponse, HTMLResponse
+from uuid import uuid4
+
+from fastapi import FastAPI, Depends, HTTPException, Query, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from database import engine, get_db, init_db, Base
@@ -30,7 +34,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Ivan Helpdesk API",
-    version="0.3.0",
+    version="0.3.1",
     description="Sistema de helpdesk para portfólio — REST API + frontend local",
     lifespan=lifespan,
     docs_url="/docs",
@@ -46,11 +50,66 @@ if FRONTEND_DIR.exists():
 # CORS for local frontend development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8001",
+        "http://localhost:8001",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Apply basic browser security headers to every response."""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    return response
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Return predictable 422 errors without leaking internal validation traces."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "error": "validation_error",
+            "detail": "Verifique os campos enviados e tente novamente.",
+            "request_id": str(uuid4()),
+        },
+    )
+
+
+@app.exception_handler(SQLAlchemyError)
+async def database_exception_handler(request: Request, exc: SQLAlchemyError):
+    """Return safe database errors instead of raw SQL details."""
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "error": "database_error",
+            "detail": "Serviço temporariamente indisponível. Tente novamente em alguns instantes.",
+            "request_id": str(uuid4()),
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def unexpected_exception_handler(request: Request, exc: Exception):
+    """Return a generic message for unexpected errors."""
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": "internal_error",
+            "detail": "Erro interno ao processar a solicitação.",
+            "request_id": str(uuid4()),
+        },
+    )
 
 
 # Dependency to get service instance
