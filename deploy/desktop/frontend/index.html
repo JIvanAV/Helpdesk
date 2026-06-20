@@ -91,13 +91,16 @@
             <h2 class="text-xl font-bold">Chamados</h2>
             <p class="text-sm text-slate-400">Atualize status, resolução e feedback direto pela interface.</p>
           </div>
-          <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="statusFilter" @change="loadTickets()">
-            <option value="">Todos os status</option>
-            <option value="aberto">Aberto</option>
-            <option value="em_andamento">Em andamento</option>
-            <option value="resolvido">Resolvido</option>
-            <option value="fechado">Fechado</option>
-          </select>
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <input class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="searchTerm" @input.debounce.350ms="loadTickets()" placeholder="Buscar chamado..." />
+            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="statusFilter" @change="loadTickets()">
+              <option value="">Todos os status</option>
+              <option value="aberto">Aberto</option>
+              <option value="em_andamento">Em andamento</option>
+              <option value="resolvido">Resolvido</option>
+              <option value="fechado">Fechado</option>
+            </select>
+          </div>
         </div>
 
         <div class="space-y-3" x-show="tickets.length">
@@ -140,6 +143,7 @@
         tickets: [],
         stats: { total: 0, open: 0, by_status: {}, by_priority: {}, by_category: {} },
         statusFilter: '',
+        searchTerm: '',
         form: {
           title: '',
           description: '',
@@ -162,6 +166,7 @@
         async loadTickets() {
           const params = new URLSearchParams({ page_size: 50 });
           if (this.statusFilter) params.set('status', this.statusFilter);
+          if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
           const res = await fetch('/tickets?' + params.toString());
           const data = await res.json();
           this.tickets = data.tickets || [];

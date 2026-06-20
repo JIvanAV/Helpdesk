@@ -10,7 +10,9 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 from main import app  # noqa: E402
+from database import init_db  # noqa: E402
 
+init_db()
 
 client = TestClient(app)
 
@@ -67,3 +69,43 @@ def test_ticket_crud_flow_via_api():
     stats_response = client.get("/stats")
     assert stats_response.status_code == 200
     assert stats_response.json()["total"] >= 1
+
+
+def test_ticket_search_filter_matches_title_and_requester_email():
+    first = client.post(
+        "/tickets",
+        json={
+            "title": "Impressora fiscal travando",
+            "description": "Fila de impressão para nota fiscal parou no setor financeiro.",
+            "category": "hardware",
+            "priority": "alta",
+            "requester_name": "Maria Financeiro",
+            "requester_email": "maria.financeiro@example.com",
+        },
+    )
+    second = client.post(
+        "/tickets",
+        json={
+            "title": "Acesso ao ERP",
+            "description": "Usuário novo precisa de permissão inicial.",
+            "category": "access",
+            "priority": "media",
+            "requester_name": "Carlos Operações",
+            "requester_email": "carlos.ops@example.com",
+        },
+    )
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+
+    title_response = client.get("/tickets?search=fiscal")
+    assert title_response.status_code == 200
+    title_payload = title_response.json()
+    assert title_payload["total"] >= 1
+    assert any(ticket["title"] == "Impressora fiscal travando" for ticket in title_payload["tickets"])
+
+    email_response = client.get("/tickets?search=carlos.ops")
+    assert email_response.status_code == 200
+    email_payload = email_response.json()
+    assert email_payload["total"] >= 1
+    assert any(ticket["requester_email"] == "carlos.ops@example.com" for ticket in email_payload["tickets"])

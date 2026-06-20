@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, or_
 
 from models import Ticket
 from schemas import TicketCreate, TicketUpdate, TicketListResponse
@@ -66,6 +66,7 @@ class TicketService:
         category: Optional[str] = None,
         priority: Optional[str] = None,
         requester_email: Optional[str] = None,
+        search: Optional[str] = None,
     ) -> TicketListResponse:
         """List tickets with filters and pagination."""
         query = self.db.query(Ticket)
@@ -78,6 +79,16 @@ class TicketService:
             query = query.filter(Ticket.priority == self._validate_priority(priority))
         if requester_email:
             query = query.filter(Ticket.requester_email == requester_email.lower().strip())
+        if search:
+            term = f"%{search.strip().lower()}%"
+            query = query.filter(
+                or_(
+                    func.lower(Ticket.title).like(term),
+                    func.lower(Ticket.description).like(term),
+                    func.lower(Ticket.requester_name).like(term),
+                    func.lower(Ticket.requester_email).like(term),
+                )
+            )
 
         total = query.count()
         tickets = (
