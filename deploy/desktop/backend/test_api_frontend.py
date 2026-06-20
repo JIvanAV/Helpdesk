@@ -2,6 +2,7 @@
 
 import sys
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
@@ -34,6 +35,8 @@ def test_home_serves_spa_frontend():
     assert "text/html" in response.headers["content-type"]
     assert "Ivan Helpdesk" in response.text
     assert "Novo chamado" in response.text
+    assert "Todas as categorias" in response.text
+    assert "categoryFilter" in response.text
     assert "helpdeskApp" in response.text
 
 
@@ -111,12 +114,50 @@ def test_ticket_search_filter_matches_title_and_requester_email():
     assert any(ticket["requester_email"] == "carlos.ops@example.com" for ticket in email_payload["tickets"])
 
 
+def test_ticket_category_filter_returns_only_selected_category():
+    hardware = client.post(
+        "/tickets",
+        json={
+            "title": "Mouse USB com falha intermitente",
+            "description": "Periférico desconecta durante o atendimento no balcão.",
+            "category": "hardware",
+            "priority": "media",
+            "requester_name": "Ana Estoque",
+            "requester_email": "ana.hardware@example.com",
+        },
+    )
+    software = client.post(
+        "/tickets",
+        json={
+            "title": "Sistema de notas sem abrir",
+            "description": "Aplicação exibe erro ao inicializar no setor fiscal.",
+            "category": "software",
+            "priority": "alta",
+            "requester_name": "Bruno Fiscal",
+            "requester_email": "bruno.software@example.com",
+        },
+    )
+
+    assert hardware.status_code == 201
+    assert software.status_code == 201
+
+    response = client.get("/tickets?category=hardware&search=example.com&page_size=20")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] >= 1
+    assert all(ticket["category"] == "hardware" for ticket in payload["tickets"])
+    assert any(ticket["requester_email"] == "ana.hardware@example.com" for ticket in payload["tickets"])
+    assert not any(ticket["requester_email"] == "bruno.software@example.com" for ticket in payload["tickets"])
+
+
 def test_ticket_priority_sort_orders_urgent_items_first():
+    run_marker = f"Ordenacao urgente {uuid4().hex[:8]}"
     cases = [
-        ("baixa", "Ordenacao urgente baixa"),
-        ("critica", "Ordenacao urgente critica"),
-        ("media", "Ordenacao urgente media"),
-        ("alta", "Ordenacao urgente alta"),
+        ("baixa", f"{run_marker} baixa"),
+        ("critica", f"{run_marker} critica"),
+        ("media", f"{run_marker} media"),
+        ("alta", f"{run_marker} alta"),
     ]
 
     for priority, title in cases:
@@ -128,14 +169,14 @@ def test_ticket_priority_sort_orders_urgent_items_first():
                 "category": "software",
                 "priority": priority,
                 "requester_name": "QA Portfolio",
-                "requester_email": f"qa.{priority}@example.com",
+                "requester_email": f"qa.{priority}.{run_marker.split()[-1]}@example.com",
             },
         )
         assert response.status_code == 201
 
-    response = client.get("/tickets?search=Ordenacao%20urgente&sort=priority&page_size=10")
+    response = client.get(f"/tickets?search={run_marker.replace(' ', '%20')}&sort=priority&page_size=10")
 
     assert response.status_code == 200
     payload = response.json()
-    ordered_priorities = [ticket["priority"] for ticket in payload["tickets"][:4]]
+    ordered_priorities = [ticket["priority"] for ticket in payload["tickets"]]
     assert ordered_priorities == ["critica", "alta", "media", "baixa"]

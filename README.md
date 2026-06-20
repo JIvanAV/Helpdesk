@@ -13,6 +13,16 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Testes automatizados
 - Evolução diária via GitHub
 
+## Melhorias já implementadas
+
+- API REST com FastAPI e persistência SQLite local
+- Frontend SPA local para abrir, listar e atualizar chamados
+- Busca por título, descrição, solicitante e e-mail
+- Filtros por status e categoria no dashboard
+- Ordenação por prioridade para destacar chamados críticos
+- Estatísticas de chamados por status, prioridade e categoria
+- Feedback de atendimento em chamados resolvidos/fechados
+
 ## MVP inicial
 
 - Cadastro de chamados em memória
