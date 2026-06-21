@@ -40,6 +40,9 @@ def test_home_serves_spa_frontend():
     assert "Todas as prioridades" in response.text
     assert "priorityFilter" in response.text
     assert "Limpar filtros" in response.text
+    assert "Filtrar técnico" in response.text
+    assert "assigneeFilter" in response.text
+    assert "Técnico responsável" in response.text
     assert "helpdeskApp" in response.text
 
 
@@ -75,6 +78,54 @@ def test_ticket_crud_flow_via_api():
     stats_response = client.get("/stats")
     assert stats_response.status_code == 200
     assert stats_response.json()["total"] >= 1
+
+
+def test_ticket_assignee_can_be_updated_and_filtered():
+    run_marker = uuid4().hex[:8]
+    assigned = client.post(
+        "/tickets",
+        json={
+            "title": f"Triagem com tecnico {run_marker}",
+            "description": "Chamado usado para validar atribuição de técnico responsável.",
+            "category": "hardware",
+            "priority": "alta",
+            "requester_name": "QA Atribuicao",
+            "requester_email": f"qa.assigned.{run_marker}@example.com",
+        },
+    )
+    unassigned = client.post(
+        "/tickets",
+        json={
+            "title": f"Controle sem tecnico {run_marker}",
+            "description": "Chamado controle para garantir que o filtro exclui outros responsáveis.",
+            "category": "hardware",
+            "priority": "media",
+            "requester_name": "QA Atribuicao",
+            "requester_email": f"qa.unassigned.{run_marker}@example.com",
+        },
+    )
+
+    assert assigned.status_code == 201
+    assert unassigned.status_code == 201
+
+    ticket_id = assigned.json()["id"]
+    update_response = client.patch(
+        f"/tickets/{ticket_id}",
+        json={"assigned_to": "Ivan Suporte", "status": "em_andamento"},
+    )
+
+    assert update_response.status_code == 200
+    updated = update_response.json()
+    assert updated["assigned_to"] == "Ivan Suporte"
+    assert updated["status"] == "em_andamento"
+
+    response = client.get(f"/tickets?assigned_to=ivan%20suporte&search={run_marker}&page_size=20")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 1
+    assert payload["tickets"][0]["id"] == ticket_id
+    assert payload["tickets"][0]["assigned_to"] == "Ivan Suporte"
 
 
 def test_ticket_search_filter_matches_title_and_requester_email():

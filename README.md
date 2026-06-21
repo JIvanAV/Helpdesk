@@ -18,7 +18,8 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - API REST com FastAPI e persistência SQLite local
 - Frontend SPA local para abrir, listar e atualizar chamados
 - Busca por título, descrição, solicitante e e-mail
-- Filtros por status, categoria e prioridade no dashboard
+- Filtros por status, categoria, prioridade e técnico responsável no dashboard
+- Atribuição de chamados para técnico responsável pela interface
 - Botão para limpar filtros e voltar rapidamente à listagem principal
 - Ordenação por prioridade para destacar chamados críticos
 - Estatísticas de chamados por status, prioridade e categoria

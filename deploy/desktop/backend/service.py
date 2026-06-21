@@ -66,6 +66,7 @@ class TicketService:
         category: Optional[str] = None,
         priority: Optional[str] = None,
         requester_email: Optional[str] = None,
+        assigned_to: Optional[str] = None,
         search: Optional[str] = None,
         sort: str = "recent",
     ) -> TicketListResponse:
@@ -80,6 +81,9 @@ class TicketService:
             query = query.filter(Ticket.priority == self._validate_priority(priority))
         if requester_email:
             query = query.filter(Ticket.requester_email == requester_email.lower().strip())
+        if assigned_to:
+            assignee = assigned_to.strip().lower()
+            query = query.filter(func.lower(Ticket.assigned_to) == assignee)
         if search:
             term = f"%{search.strip().lower()}%"
             query = query.filter(

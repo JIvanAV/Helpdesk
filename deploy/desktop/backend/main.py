@@ -153,6 +153,7 @@ def list_tickets(
     category: str | None = Query(None, description="Filtrar por categoria"),
     priority: str | None = Query(None, description="Filtrar por prioridade"),
     requester_email: str | None = Query(None, description="Filtrar por email do solicitante"),
+    assigned_to: str | None = Query(None, description="Filtrar por técnico responsável"),
     search: str | None = Query(None, min_length=2, description="Buscar em título, descrição, nome ou email"),
     sort: str = Query("recent", pattern="^(recent|priority)$", description="Ordenar por recent ou priority"),
     service: TicketService = Depends(get_ticket_service),
@@ -165,6 +166,7 @@ def list_tickets(
         category=category,
         priority=priority,
         requester_email=requester_email,
+        assigned_to=assigned_to,
         search=search,
         sort=sort,
     )
