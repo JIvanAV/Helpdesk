@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class TicketBase(BaseModel):
@@ -44,8 +44,8 @@ class TicketResponse(TicketBase):
     resolved_at: Optional[datetime] = None
     feedback: Optional[int] = None
 
-    class Config:
-        from_attributes = True
+    # Pydantic v2: permite criar a resposta direto de objetos ORM do SQLAlchemy.
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TicketListResponse(BaseModel):

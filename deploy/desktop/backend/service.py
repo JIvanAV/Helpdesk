@@ -125,14 +125,21 @@ class TicketService:
             page_size=page_size,
         )
 
-    def update_ticket(self, ticket_id: int, ticket_data: TicketUpdate) -> Optional[Ticket]:
-        """Update a ticket (partial)."""
+    def update_ticket(self, ticket_id: int, ticket_update: TicketUpdate) -> Optional[Ticket]:
+        """
+        Atualiza campos de um chamado existente.
+
+        Nota: A resolução é cumulativa. Se o usuário enviar uma nova,
+        ela é anexada ao histórico anterior com uma separação visual.
+        """
         ticket = self.get_ticket(ticket_id)
         if not ticket:
             return None
 
-        update_data = ticket_data.model_dump(exclude_unset=True)
+        # Converte para dict ignorando campos que não foram enviados na requisição
+        update_data = ticket_update.model_dump(exclude_unset=True)
 
+        # Validação centralizada de campos de texto/status
         if "category" in update_data and update_data["category"]:
             update_data["category"] = self._validate_category(update_data["category"])
         if "priority" in update_data and update_data["priority"]:
@@ -140,31 +147,35 @@ class TicketService:
         if "status" in update_data and update_data["status"]:
             new_status = self._validate_status(update_data["status"])
             update_data["status"] = new_status
-            # Auto-set resolved_at when status changes to resolvido
+
+            # Marca tempo de resolução se finalizado
             if new_status == "resolvido" and ticket.status != "resolvido":
                 update_data["resolved_at"] = datetime.utcnow()
             elif new_status != "resolvido" and ticket.status == "resolvido":
                 update_data["resolved_at"] = None
-        
-        # Validate feedback: only allowed if status is resolvido or fechado
+
+        # Regra de negócio para feedback (apenas em chamados finalizados)
         if "feedback" in update_data and update_data["feedback"] is not None:
             current_status = update_data.get("status", ticket.status)
             if current_status not in ["resolvido", "fechado"]:
-                 raise ValueError("Feedback só pode ser adicionado em chamados resolvidos ou fechados.")
+                 raise ValueError("Feedback só pode ser adicionado em chamados finalizados.")
             if not (1 <= update_data["feedback"] <= 5):
                  raise ValueError("Feedback deve ser entre 1 e 5.")
 
+        # Lógica de histórico para o campo de resolução
         if "resolution" in update_data:
             if not update_data["resolution"]:
                 update_data.pop("resolution")
             else:
                 new_resolution = update_data["resolution"].strip()
-                current_resolution = ticket.resolution or ""
-                if current_resolution and current_resolution not in new_resolution:
-                    update_data["resolution"] = f"{current_resolution}\n\n---\n{new_resolution}"
+                current_res = ticket.resolution or ""
+                # Se já existe, anexa ao histórico para não perder registros
+                if current_res and current_res not in new_resolution:
+                    update_data["resolution"] = f"{current_res}\n\n---\n{new_resolution}"
                 else:
                     update_data["resolution"] = new_resolution
 
+        # Aplica todas as mudanças validadas
         for field, value in update_data.items():
             setattr(ticket, field, value)
 

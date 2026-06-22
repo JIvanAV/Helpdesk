@@ -13,8 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from database import engine, get_db, init_db, Base
-from models import Ticket
+from database import get_db, init_db
 from schemas import (
     TicketCreate,
     TicketUpdate,

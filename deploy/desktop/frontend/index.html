@@ -171,20 +171,29 @@
     </div>
   </main>
 
+  <!--
+    Interface simples de portfólio: tudo fica em um único HTML para facilitar
+    avaliação local, sem exigir build de React/Vite ou pipeline de frontend.
+  -->
   <script>
     function helpdeskApp() {
       return {
+        // Estado da tela: carregamento, mensagens e coleções vindas da API.
         loading: false,
         message: '',
         messageType: 'success',
         tickets: [],
         stats: { total: 0, open: 0, by_status: {}, by_priority: {}, by_category: {} },
+
+        // Filtros usados na listagem de chamados.
         statusFilter: '',
         categoryFilter: '',
         priorityFilter: '',
         assigneeFilter: '',
         searchTerm: '',
         sortOrder: 'recent',
+
+        // Valores iniciais deixam o demo pronto para uso local.
         form: {
           title: '',
           description: '',
@@ -194,6 +203,8 @@
           requester_email: 'joseivanabrantes@gmail.com',
           requester_department: 'TI'
         },
+
+        // Cards do dashboard calculados a partir das estatísticas da API.
         get statCards() {
           return [
             { label: 'Total', value: this.stats.total || 0, color: 'text-slate-100' },
@@ -202,6 +213,8 @@
             { label: 'Resolvidos', value: this.stats.by_status?.resolvido || 0, color: 'text-emerald-300' },
           ];
         },
+
+        // Aviso simples para reduzir vazamento acidental de senhas e tokens.
         get descriptionRisk() {
           return /\b(password|passwd|senha|token|secret|api[_-]?key)\b\s*[:=]/i.test(this.form.description);
         },
@@ -209,8 +222,12 @@
           if (this.descriptionRisk) return 'Atenção: remova senhas, tokens ou chaves antes de enviar o chamado.';
           return `${this.form.description.length}/2000 caracteres • Não inclua credenciais.`;
         },
+
         async init() { await this.loadAll(); },
+
+        // Carrega lista e estatísticas juntas para manter o painel consistente.
         async loadAll() { await Promise.all([this.loadTickets(), this.loadStats()]); },
+
         async loadTickets() {
           const params = new URLSearchParams({ page_size: 50, sort: this.sortOrder });
           if (this.statusFilter) params.set('status', this.statusFilter);
@@ -218,14 +235,19 @@
           if (this.priorityFilter) params.set('priority', this.priorityFilter);
           if (this.assigneeFilter.trim().length >= 2) params.set('assigned_to', this.assigneeFilter.trim());
           if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
+
           const res = await fetch('/tickets?' + params.toString());
           const data = await res.json();
+
+          // resolution_note é temporário: não sobrescreve o histórico já salvo.
           this.tickets = (data.tickets || []).map(ticket => ({ ...ticket, resolution_note: '' }));
         },
+
         async loadStats() {
           const res = await fetch('/stats');
           this.stats = await res.json();
         },
+
         async clearFilters() {
           this.searchTerm = '';
           this.sortOrder = 'recent';
@@ -235,6 +257,7 @@
           this.statusFilter = '';
           await this.loadTickets();
         },
+
         async createTicket() {
           this.loading = true;
           this.message = '';
@@ -245,6 +268,7 @@
               body: JSON.stringify(this.form)
             });
             if (!res.ok) throw new Error((await res.json()).detail || 'Falha ao criar chamado');
+
             this.messageType = 'success';
             this.message = 'Chamado criado com sucesso.';
             this.form.title = '';
@@ -257,26 +281,31 @@
             this.loading = false;
           }
         },
+
         async updateTicket(ticket) {
           const payload = {
             status: ticket.status,
             assigned_to: ticket.assigned_to || null,
             resolution: ticket.resolution_note?.trim() || null
           };
+
           const res = await fetch('/tickets/' + ticket.id, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
+
           if (!res.ok) {
             alert((await res.json()).detail || 'Erro ao atualizar chamado');
             return;
           }
           await this.loadAll();
         },
+
         statusLabel(status) {
           return { aberto: 'Aberto', em_andamento: 'Em andamento', resolvido: 'Resolvido', fechado: 'Fechado' }[status] || status;
         },
+
         statusBadge(status) {
           return {
             aberto: 'bg-blue-500/10 text-blue-300',
