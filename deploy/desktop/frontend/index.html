@@ -11,9 +11,9 @@
   <main class="mx-auto max-w-6xl px-4 py-8">
     <header class="mb-8 flex flex-col gap-4 rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl md:flex-row md:items-center md:justify-between">
       <div>
-        <p class="mb-2 inline-flex rounded-full bg-blue-500/10 px-3 py-1 text-sm font-semibold text-blue-300">Portfólio Helpdesk • FastAPI + SQLite</p>
-        <h1 class="text-3xl font-bold tracking-tight md:text-4xl">Ivan Helpdesk</h1>
-        <p class="mt-2 max-w-2xl text-slate-300">Portal local para abrir chamados, acompanhar status e demonstrar fluxo real de suporte técnico.</p>
+        <p class="mb-2 inline-flex rounded-full bg-blue-500/10 px-3 py-1 text-sm font-semibold text-blue-300 shadow-sm ring-1 ring-inset ring-blue-500/20">Portfólio Helpdesk • FastAPI + SQLite</p>
+        <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Ivan Helpdesk</h1>
+        <p class="mt-2 max-w-2xl text-slate-400">Portal local para abrir chamados, acompanhar status e demonstrar fluxo real de suporte técnico.</p>
       </div>
       <div class="flex gap-3 text-sm">
         <a class="rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500" href="/docs" target="_blank">Swagger</a>
@@ -23,7 +23,7 @@
 
     <section class="mb-8 grid gap-4 md:grid-cols-4">
       <template x-for="card in statCards" :key="card.label">
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <div class="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-slate-700 hover:bg-slate-850">
           <p class="text-sm text-slate-400" x-text="card.label"></p>
           <p class="mt-2 text-3xl font-bold" :class="card.color" x-text="card.value"></p>
         </div>
@@ -31,7 +31,15 @@
     </section>
 
     <div class="grid gap-6 lg:grid-cols-[0.95fr_1.4fr]">
-      <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+      <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-slate-950/30">
+        <div class="mb-5 rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm text-blue-100">
+          <p class="font-semibold text-blue-200">Checklist rápido de triagem</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5 text-blue-100/80">
+            <li>Informe impacto, sistema afetado e urgência real.</li>
+            <li>Evite senhas, tokens ou dados sensíveis na descrição.</li>
+            <li>Use prioridade crítica apenas quando houver parada operacional.</li>
+          </ul>
+        </div>
         <h2 class="mb-4 text-xl font-bold">Novo chamado</h2>
         <form class="space-y-4" @submit.prevent="createTicket()">
           <label class="block">
@@ -41,7 +49,8 @@
 
           <label class="block">
             <span class="mb-1 block text-sm text-slate-300">Descrição</span>
-            <textarea class="min-h-28 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 outline-none ring-blue-500 focus:ring-2" x-model="form.description" required minlength="10" placeholder="Descreva o problema, impacto e tentativas já realizadas"></textarea>
+            <textarea class="min-h-28 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 outline-none ring-blue-500 focus:ring-2" x-model="form.description" required minlength="10" maxlength="2000" placeholder="Descreva o problema, impacto e tentativas já realizadas"></textarea>
+            <p class="mt-1 text-xs" :class="descriptionRisk ? 'text-amber-300' : 'text-slate-500'" x-text="descriptionHelp"></p>
           </label>
 
           <div class="grid gap-3 sm:grid-cols-2">
@@ -187,6 +196,13 @@
             { label: 'Críticos', value: this.stats.by_priority?.critica || 0, color: 'text-red-300' },
             { label: 'Resolvidos', value: this.stats.by_status?.resolvido || 0, color: 'text-emerald-300' },
           ];
+        },
+        get descriptionRisk() {
+          return /\b(password|passwd|senha|token|secret|api[_-]?key)\b\s*[:=]/i.test(this.form.description);
+        },
+        get descriptionHelp() {
+          if (this.descriptionRisk) return 'Atenção: remova senhas, tokens ou chaves antes de enviar o chamado.';
+          return `${this.form.description.length}/2000 caracteres • Não inclua credenciais.`;
         },
         async init() { await this.loadAll(); },
         async loadAll() { await Promise.all([this.loadTickets(), this.loadStats()]); },
