@@ -82,7 +82,8 @@
             </label>
             <label class="block">
               <span class="mb-1 block text-sm text-slate-300">E-mail</span>
-              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2" x-model="form.requester_email" required type="email" placeholder="email@empresa.com" />
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2" x-model="form.requester_email" required type="email" inputmode="email" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Formato esperado: nome@empresa.com" placeholder="email@empresa.com" />
+              <p class="mt-1 text-xs text-slate-500">Formato esperado: nome@empresa.com</p>
             </label>
           </div>
 

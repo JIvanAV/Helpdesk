@@ -43,6 +43,8 @@ def test_home_serves_spa_frontend():
     assert "Filtrar técnico" in response.text
     assert "assigneeFilter" in response.text
     assert "Técnico responsável" in response.text
+    assert "Formato esperado: nome@empresa.com" in response.text
+    assert "pattern=\"[^@\\s]+@[^@\\s]+\\.[^@\\s]+\"" in response.text
     assert "helpdeskApp" in response.text
 
 
