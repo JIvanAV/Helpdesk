@@ -56,6 +56,7 @@ class Ticket:
     requester: str
     priority: TicketPriority = TicketPriority.MEDIUM
     status: TicketStatus = TicketStatus.OPEN
+    resolution: str | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -114,12 +115,23 @@ class HelpdeskService:
         except KeyError as exc:
             raise KeyError(f"ticket {ticket_id} not found") from exc
 
-    def update_status(self, ticket_id: int, status: TicketStatus | str) -> Ticket:
+    def update_status(self, ticket_id: int, status: TicketStatus | str, resolution: str | None = None) -> Ticket:
         ticket = self.get_ticket(ticket_id)
         new_status = TicketStatus(status)
         if ticket.status == TicketStatus.CLOSED and new_status != TicketStatus.CLOSED:
             raise ValueError("closed tickets cannot be reopened in MVP")
         ticket.status = new_status
+        if resolution:
+            cleaned_resolution = _clean_field(
+                resolution,
+                field="resolution",
+                max_length=MAX_DESCRIPTION_LEN,
+            )
+            ticket.resolution = (
+                f"{ticket.resolution}\n\n---\n{cleaned_resolution}"
+                if ticket.resolution
+                else cleaned_resolution
+            )
         ticket.updated_at = datetime.now(timezone.utc)
         return ticket
 

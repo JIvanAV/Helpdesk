@@ -154,6 +154,17 @@ class TicketService:
             if not (1 <= update_data["feedback"] <= 5):
                  raise ValueError("Feedback deve ser entre 1 e 5.")
 
+        if "resolution" in update_data:
+            if not update_data["resolution"]:
+                update_data.pop("resolution")
+            else:
+                new_resolution = update_data["resolution"].strip()
+                current_resolution = ticket.resolution or ""
+                if current_resolution and current_resolution not in new_resolution:
+                    update_data["resolution"] = f"{current_resolution}\n\n---\n{new_resolution}"
+                else:
+                    update_data["resolution"] = new_resolution
+
         for field, value in update_data.items():
             setattr(ticket, field, value)
 

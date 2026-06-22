@@ -43,6 +43,9 @@ def test_home_serves_spa_frontend():
     assert "Filtrar técnico" in response.text
     assert "assigneeFilter" in response.text
     assert "Técnico responsável" in response.text
+    assert "Histórico de resolução" in response.text
+    assert "Nova atualização da resolução" in response.text
+    assert "resolution_note" in response.text
     assert "Formato esperado: nome@empresa.com" in response.text
     assert "pattern=\"[^@\\s]+@[^@\\s]+\\.[^@\\s]+\"" in response.text
     assert "helpdeskApp" in response.text
@@ -80,6 +83,40 @@ def test_ticket_crud_flow_via_api():
     stats_response = client.get("/stats")
     assert stats_response.status_code == 200
     assert stats_response.json()["total"] >= 1
+
+
+def test_ticket_resolution_updates_are_appended_as_history():
+    run_marker = uuid4().hex[:8]
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Historico resolucao {run_marker}",
+            "description": "Chamado usado para validar histórico de resolução.",
+            "category": "software",
+            "priority": "media",
+            "requester_name": "QA Historico",
+            "requester_email": f"qa.history.{run_marker}@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+    ticket_id = create_response.json()["id"]
+
+    first = client.patch(
+        f"/tickets/{ticket_id}",
+        json={"status": "em_andamento", "resolution": "Primeira análise registrada."},
+    )
+    second = client.patch(
+        f"/tickets/{ticket_id}",
+        json={"status": "resolvido", "resolution": "Solução final aplicada."},
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    resolution = second.json()["resolution"]
+    assert "Primeira análise registrada." in resolution
+    assert "Solução final aplicada." in resolution
+    assert resolution.index("Primeira análise registrada.") < resolution.index("Solução final aplicada.")
 
 
 def test_ticket_assignee_can_be_updated_and_filtered():

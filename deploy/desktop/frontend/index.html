@@ -144,6 +144,10 @@
                   <p class="mt-1 text-sm text-slate-300" x-text="ticket.description"></p>
                   <p class="mt-2 text-xs text-slate-500" x-text="ticket.requester_name + ' • ' + ticket.requester_email"></p>
                   <p class="mt-1 text-xs text-slate-400" x-show="ticket.assigned_to" x-text="'Técnico: ' + ticket.assigned_to"></p>
+                  <div class="mt-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3 text-xs text-slate-300" x-show="ticket.resolution">
+                    <p class="mb-1 font-semibold text-emerald-300">Histórico de resolução</p>
+                    <p class="whitespace-pre-line" x-text="ticket.resolution"></p>
+                  </div>
                 </div>
                 <span class="rounded-full px-3 py-1 text-xs font-bold" :class="statusBadge(ticket.status)" x-text="statusLabel(ticket.status)"></span>
               </div>
@@ -156,7 +160,7 @@
                   <option value="fechado">Fechado</option>
                 </select>
                 <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.assigned_to" placeholder="Técnico responsável" />
-                <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.resolution" placeholder="Resumo da solução" />
+                <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.resolution_note" placeholder="Nova atualização da resolução" />
                 <button class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-500" @click="updateTicket(ticket)">Salvar</button>
               </div>
             </article>
@@ -216,7 +220,7 @@
           if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
           const res = await fetch('/tickets?' + params.toString());
           const data = await res.json();
-          this.tickets = data.tickets || [];
+          this.tickets = (data.tickets || []).map(ticket => ({ ...ticket, resolution_note: '' }));
         },
         async loadStats() {
           const res = await fetch('/stats');
@@ -254,7 +258,11 @@
           }
         },
         async updateTicket(ticket) {
-          const payload = { status: ticket.status, assigned_to: ticket.assigned_to || null, resolution: ticket.resolution || null };
+          const payload = {
+            status: ticket.status,
+            assigned_to: ticket.assigned_to || null,
+            resolution: ticket.resolution_note?.trim() || null
+          };
           const res = await fetch('/tickets/' + ticket.id, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },

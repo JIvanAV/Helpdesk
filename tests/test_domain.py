@@ -71,6 +71,18 @@ def test_closed_ticket_cannot_be_reopened_in_mvp():
         service.update_status(ticket.id, TicketStatus.OPEN)
 
 
+def test_update_status_appends_resolution_history():
+    service = HelpdeskService()
+    ticket = service.create_ticket(title="A", description="desc", requester="u")
+
+    service.update_status(ticket.id, TicketStatus.IN_PROGRESS, resolution="Primeira triagem realizada")
+    updated = service.update_status(ticket.id, TicketStatus.RESOLVED, resolution="Correção validada com usuário")
+
+    assert "Primeira triagem realizada" in updated.resolution
+    assert "Correção validada com usuário" in updated.resolution
+    assert updated.resolution.index("Primeira triagem realizada") < updated.resolution.index("Correção validada com usuário")
+
+
 def test_summary_counts_tickets_by_status():
     service = HelpdeskService()
     first = service.create_ticket(title="A", description="desc", requester="u")
