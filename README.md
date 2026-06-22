@@ -35,6 +35,8 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Atualização de status
 - Regras básicas de prioridade
 - Testes unitários do domínio
+- Higienização de dados sensíveis em chamados (senhas/tokens redigidos)
+- Limites de tamanho para campos controlados pelo usuário
 
 ## Roadmap diário sugerido
 

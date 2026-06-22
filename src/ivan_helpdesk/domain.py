@@ -2,9 +2,36 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import re
 from enum import Enum
 from itertools import count
 from typing import Iterable
+
+
+MAX_TITLE_LEN = 100
+MAX_DESCRIPTION_LEN = 2000
+MAX_REQUESTER_LEN = 100
+REDACTION = "[REDACTED]"
+SENSITIVE_PATTERNS = (
+    re.compile(r"(?i)\b(password|passwd|senha|token|secret|api[_-]?key)\s*[:=]\s*\S+"),
+    re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b"),
+)
+
+
+def _redact_sensitive_values(value: str) -> str:
+    redacted = value
+    for pattern in SENSITIVE_PATTERNS:
+        redacted = pattern.sub(lambda match: f"{match.group(1)}={REDACTION}" if match.lastindex else REDACTION, redacted)
+    return redacted
+
+
+def _clean_field(value: str, *, field: str, max_length: int) -> str:
+    cleaned = _redact_sensitive_values(value.strip())
+    if not cleaned:
+        raise ValueError(f"{field} is required")
+    if len(cleaned) > max_length:
+        raise ValueError(f"{field} must be at most {max_length} characters")
+    return cleaned
 
 
 class TicketStatus(str, Enum):
@@ -48,15 +75,13 @@ class HelpdeskService:
         requester: str,
         priority: TicketPriority | str = TicketPriority.MEDIUM,
     ) -> Ticket:
-        title = title.strip()
-        description = description.strip()
-        requester = requester.strip()
-        if not title:
-            raise ValueError("title is required")
-        if not description:
-            raise ValueError("description is required")
-        if not requester:
-            raise ValueError("requester is required")
+        title = _clean_field(title, field="title", max_length=MAX_TITLE_LEN)
+        description = _clean_field(
+            description,
+            field="description",
+            max_length=MAX_DESCRIPTION_LEN,
+        )
+        requester = _clean_field(requester, field="requester", max_length=MAX_REQUESTER_LEN)
 
         ticket = Ticket(
             id=next(self._ids),

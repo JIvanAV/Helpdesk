@@ -25,6 +25,32 @@ def test_create_ticket_validates_empty_fields():
         service.create_ticket(title=" ", description="desc", requester="user")
 
 
+def test_create_ticket_redacts_sensitive_values_from_user_input():
+    service = HelpdeskService()
+
+    fake_token = "ghp_1234567890abcdefghij1234567890abcdefghij"
+    ticket = service.create_ticket(
+        title="VPN password=SuperSecret123 falhando",
+        description=f"Token: {fake_token}",
+        requester="José Ivan",
+    )
+
+    assert "SuperSecret123" not in ticket.title
+    assert fake_token not in ticket.description
+    assert "[REDACTED]" in ticket.title
+    assert "[REDACTED]" in ticket.description
+
+
+def test_create_ticket_limits_user_controlled_field_sizes():
+    service = HelpdeskService()
+
+    with pytest.raises(ValueError, match="title must be at most 100 characters"):
+        service.create_ticket(title="A" * 101, description="desc", requester="user")
+
+    with pytest.raises(ValueError, match="description must be at most 2000 characters"):
+        service.create_ticket(title="A", description="D" * 2001, requester="user")
+
+
 def test_list_tickets_can_filter_by_status_and_priority():
     service = HelpdeskService()
     first = service.create_ticket(title="A", description="desc", requester="u", priority="high")
