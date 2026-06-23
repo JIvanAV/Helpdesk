@@ -21,13 +21,17 @@
       </div>
     </header>
 
-    <section class="mb-8 grid gap-4 md:grid-cols-4">
+        <section class="mb-8 grid gap-4 md:grid-cols-4">
       <template x-for="card in statCards" :key="card.label">
         <div class="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-slate-700 hover:bg-slate-850">
           <p class="text-sm text-slate-400" x-text="card.label"></p>
           <p class="mt-2 text-3xl font-bold" :class="card.color" x-text="card.value"></p>
         </div>
       </template>
+      <button class="flex flex-col items-center justify-center rounded-2xl border border-red-500/30 bg-red-900/10 p-5 text-red-300 transition hover:bg-red-900/20" @click="priorityFilter='critica'; loadTickets()">
+        <p class="text-sm font-semibold">Ver Chamados Críticos</p>
+        <p class="mt-1 text-2xl font-bold" x-text="stats.by_priority?.critica || 0"></p>
+      </button>
     </section>
 
     <div class="grid gap-6 lg:grid-cols-[0.95fr_1.4fr]">
