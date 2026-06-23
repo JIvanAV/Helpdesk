@@ -2,12 +2,14 @@
 
 from contextlib import asynccontextmanager
 from pathlib import Path
+import csv
+import io
 
 from uuid import uuid4
 
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
@@ -168,6 +170,52 @@ def list_tickets(
         assigned_to=assigned_to,
         search=search,
         sort=sort,
+    )
+
+
+@app.get("/tickets/export.csv", tags=["Tickets"])
+def export_tickets_csv(service: TicketService = Depends(get_ticket_service)):
+    """Exportar chamados para CSV compatível com Excel/LibreOffice."""
+    tickets = service.list_tickets(page=1, page_size=100, sort="recent").tickets
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow([
+        "id",
+        "titulo",
+        "categoria",
+        "prioridade",
+        "status",
+        "solicitante",
+        "email",
+        "tecnico",
+        "feedback",
+        "criado_em",
+        "atualizado_em",
+        "resolvido_em",
+    ])
+
+    for ticket in tickets:
+        writer.writerow([
+            ticket.id,
+            ticket.title,
+            ticket.category,
+            ticket.priority,
+            ticket.status,
+            ticket.requester_name,
+            ticket.requester_email,
+            ticket.assigned_to or "",
+            ticket.feedback or "",
+            ticket.created_at.isoformat() if ticket.created_at else "",
+            ticket.updated_at.isoformat() if ticket.updated_at else "",
+            ticket.resolved_at.isoformat() if ticket.resolved_at else "",
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=ivan-helpdesk-chamados.csv"},
     )
 
 

@@ -49,6 +49,34 @@ def test_home_serves_spa_frontend():
     assert "Formato esperado: nome@empresa.com" in response.text
     assert "pattern=\"[^@\\s]+@[^@\\s]+\\.[^@\\s]+\"" in response.text
     assert "helpdeskApp" in response.text
+    assert "Exportar CSV" in response.text
+    assert "/tickets/export.csv" in response.text
+
+
+def test_ticket_export_csv_download_contains_created_ticket():
+    run_marker = uuid4().hex[:8]
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Exportacao CSV {run_marker}",
+            "description": "Chamado usado para validar exportação CSV de relatórios.",
+            "category": "software",
+            "priority": "critica",
+            "requester_name": "QA Exportacao",
+            "requester_email": f"qa.export.{run_marker}@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    response = client.get("/tickets/export.csv")
+
+    assert response.status_code == 200
+    assert "text/csv" in response.headers["content-type"]
+    assert "ivan-helpdesk-chamados.csv" in response.headers["content-disposition"]
+    assert "id;titulo;categoria;prioridade;status" in response.text
+    assert f"Exportacao CSV {run_marker}" in response.text
+    assert f"qa.export.{run_marker}@example.com" in response.text
 
 
 def test_ticket_crud_flow_via_api():
