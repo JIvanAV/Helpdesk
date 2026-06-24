@@ -25,7 +25,7 @@ def test_health_reports_current_version():
     payload = response.json()
     assert payload["status"] == "healthy"
     assert payload["service"] == "ivan-helpdesk"
-    assert payload["version"] == "0.3.1"
+    assert payload["version"] == "0.3.2"
 
 
 def test_home_serves_spa_frontend():
@@ -51,6 +51,9 @@ def test_home_serves_spa_frontend():
     assert "helpdeskApp" in response.text
     assert "Exportar CSV" in response.text
     assert "/tickets/export.csv" in response.text
+    assert "Origem do chamado" in response.text
+    assert "originFilter" in response.text
+    assert "Todas as origens" in response.text
 
 
 def test_ticket_export_csv_download_contains_created_ticket():
@@ -62,6 +65,7 @@ def test_ticket_export_csv_download_contains_created_ticket():
             "description": "Chamado usado para validar exportação CSV de relatórios.",
             "category": "software",
             "priority": "critica",
+            "origin": "whatsapp",
             "requester_name": "QA Exportacao",
             "requester_email": f"qa.export.{run_marker}@example.com",
         },
@@ -74,7 +78,7 @@ def test_ticket_export_csv_download_contains_created_ticket():
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
     assert "ivan-helpdesk-chamados.csv" in response.headers["content-disposition"]
-    assert "id;titulo;categoria;prioridade;status" in response.text
+    assert "id;titulo;categoria;prioridade;status;origem" in response.text
     assert f"Exportacao CSV {run_marker}" in response.text
     assert f"qa.export.{run_marker}@example.com" in response.text
 
@@ -390,3 +394,37 @@ def test_validation_errors_return_safe_generic_payload():
     assert payload["detail"] == "Verifique os campos enviados e tente novamente."
     assert "request_id" in payload
     assert "email-invalido" not in response.text
+
+
+def test_ticket_origin_can_be_created_updated_filtered_and_reported():
+    run_marker = uuid4().hex[:8]
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Origem WhatsApp {run_marker}",
+            "description": "Chamado usado para validar origem do atendimento.",
+            "category": "software",
+            "priority": "media",
+            "origin": "whatsapp",
+            "requester_name": "QA Origem",
+            "requester_email": f"qa.origin.{run_marker}@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+    ticket = create_response.json()
+    assert ticket["origin"] == "whatsapp"
+
+    update_response = client.patch(f"/tickets/{ticket['id']}", json={"origin": "telefone"})
+    assert update_response.status_code == 200
+    assert update_response.json()["origin"] == "telefone"
+
+    filter_response = client.get(f"/tickets?origin=telefone&search={run_marker}&page_size=20")
+    assert filter_response.status_code == 200
+    payload = filter_response.json()
+    assert payload["total"] == 1
+    assert payload["tickets"][0]["id"] == ticket["id"]
+
+    stats_response = client.get("/stats")
+    assert stats_response.status_code == 200
+    assert stats_response.json()["by_origin"]["telefone"] >= 1

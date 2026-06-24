@@ -43,3 +43,5 @@ def init_db() -> None:
         columns = [row[1] for row in conn.execute(text("PRAGMA table_info(tickets)"))]
         if "feedback" not in columns:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN feedback INTEGER"))
+        if "origin" not in columns:
+            conn.execute(text("ALTER TABLE tickets ADD COLUMN origin VARCHAR(50) NOT NULL DEFAULT 'portal'"))

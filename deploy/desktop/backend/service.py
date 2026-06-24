@@ -15,6 +15,7 @@ class TicketService:
     VALID_CATEGORIES = {"hardware", "software", "network", "access", "other"}
     VALID_PRIORITIES = {"baixa", "media", "alta", "critica"}
     VALID_STATUSES = {"aberto", "em_andamento", "resolvido", "fechado"}
+    VALID_ORIGINS = {"email", "telefone", "whatsapp", "portal", "presencial"}
 
     def __init__(self, db: Session):
         self.db = db
@@ -37,6 +38,12 @@ class TicketService:
             raise ValueError(f"Status inválido: {status}. Válidos: {', '.join(self.VALID_STATUSES)}")
         return st
 
+    def _validate_origin(self, origin: str) -> str:
+        normalized = origin.lower().strip().replace("e-mail", "email")
+        if normalized not in self.VALID_ORIGINS:
+            raise ValueError(f"Origem inválida: {origin}. Válidas: {', '.join(self.VALID_ORIGINS)}")
+        return normalized
+
     def create_ticket(self, ticket_data: TicketCreate) -> Ticket:
         """Create a new ticket."""
         ticket = Ticket(
@@ -44,6 +51,7 @@ class TicketService:
             description=ticket_data.description.strip(),
             category=self._validate_category(ticket_data.category),
             priority=self._validate_priority(ticket_data.priority),
+            origin=self._validate_origin(ticket_data.origin),
             status="aberto",
             requester_name=ticket_data.requester_name.strip(),
             requester_email=ticket_data.requester_email.lower().strip(),
@@ -67,6 +75,7 @@ class TicketService:
         priority: Optional[str] = None,
         requester_email: Optional[str] = None,
         assigned_to: Optional[str] = None,
+        origin: Optional[str] = None,
         search: Optional[str] = None,
         sort: str = "recent",
     ) -> TicketListResponse:
@@ -84,6 +93,8 @@ class TicketService:
         if assigned_to:
             assignee = assigned_to.strip().lower()
             query = query.filter(func.lower(Ticket.assigned_to) == assignee)
+        if origin:
+            query = query.filter(Ticket.origin == self._validate_origin(origin))
         if search:
             term = f"%{search.strip().lower()}%"
             query = query.filter(
@@ -144,6 +155,8 @@ class TicketService:
             update_data["category"] = self._validate_category(update_data["category"])
         if "priority" in update_data and update_data["priority"]:
             update_data["priority"] = self._validate_priority(update_data["priority"])
+        if "origin" in update_data and update_data["origin"]:
+            update_data["origin"] = self._validate_origin(update_data["origin"])
         if "status" in update_data and update_data["status"]:
             new_status = self._validate_status(update_data["status"])
             update_data["status"] = new_status
@@ -211,6 +224,11 @@ class TicketService:
             .group_by(Ticket.category)
             .all()
         )
+        by_origin = dict(
+            self.db.query(Ticket.origin, func.count(Ticket.id))
+            .group_by(Ticket.origin)
+            .all()
+        )
         open_count = self.db.query(Ticket).filter(Ticket.status == "aberto").count()
 
         return {
@@ -219,4 +237,5 @@ class TicketService:
             "by_status": by_status,
             "by_priority": by_priority,
             "by_category": by_category,
+            "by_origin": by_origin,
         }

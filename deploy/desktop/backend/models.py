@@ -27,6 +27,7 @@ class Ticket(Base):
 
     # Assignment & resolution
     assigned_to = Column(String(100), nullable=True, index=True)
+    origin = Column(String(50), nullable=False, default="portal", index=True)  # email, telefone, whatsapp, portal, presencial
     resolution = Column(Text, nullable=True)
     feedback = Column(Integer, nullable=True)  # 1-5 feedback score
 

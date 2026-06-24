@@ -11,6 +11,7 @@ class TicketBase(BaseModel):
     description: str = Field(..., min_length=10, description="Detailed description")
     category: str = Field(..., description="Category: hardware, software, network, access, other")
     priority: str = Field(default="media", description="Priority: baixa, media, alta, critica")
+    origin: str = Field(default="portal", description="Origem: email, telefone, whatsapp, portal, presencial")
     requester_name: str = Field(..., min_length=2, max_length=100)
     requester_email: EmailStr
     requester_department: Optional[str] = Field(default=None, max_length=100)
@@ -29,6 +30,7 @@ class TicketUpdate(BaseModel):
     priority: Optional[str] = None
     status: Optional[str] = Field(default=None, description="Status: aberto, em_andamento, resolvido, fechado")
     assigned_to: Optional[str] = Field(default=None, max_length=100)
+    origin: Optional[str] = None
     resolution: Optional[str] = None
     feedback: Optional[int] = Field(default=None, ge=1, le=5, description="Nota de feedback de 1 a 5")
 
@@ -60,5 +62,5 @@ class HealthResponse(BaseModel):
     """Health check response."""
     status: str = "healthy"
     service: str = "ivan-helpdesk"
-    version: str = "0.3.1"
+    version: str = "0.3.2"
     database: str = "connected"

@@ -13,7 +13,7 @@
       <div>
         <p class="mb-2 inline-flex rounded-full bg-blue-500/10 px-3 py-1 text-sm font-semibold text-blue-300 shadow-sm ring-1 ring-inset ring-blue-500/20">Portfólio Helpdesk • FastAPI + SQLite</p>
         <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Ivan Helpdesk</h1>
-        <p class="mt-2 max-w-2xl text-slate-400">Portal local para abrir chamados, acompanhar status e demonstrar fluxo real de suporte técnico.</p>
+        <p class="mt-2 max-w-2xl text-slate-400">Portal local para abrir chamados, acompanhar status, origem do atendimento e fluxo real de suporte técnico.</p>
       </div>
       <div class="flex gap-3 text-sm">
       <a class="rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500" href="/docs" target="_blank">Swagger</a>
@@ -95,6 +95,18 @@
             </label>
           </div>
 
+          <label class="block">
+            <span class="mb-1 block text-sm text-slate-300">Origem do chamado</span>
+            <select class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2" x-model="form.origin">
+              <option value="portal">Portal</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="email">E-mail</option>
+              <option value="telefone">Telefone</option>
+              <option value="presencial">Presencial</option>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Ajuda a entender de onde vêm mais demandas de suporte.</p>
+          </label>
+
           <div class="grid gap-3 sm:grid-cols-2">
             <label class="block">
               <span class="mb-1 block text-sm text-slate-300">Solicitante</span>
@@ -142,6 +154,14 @@
               <option value="media">Média</option>
               <option value="baixa">Baixa</option>
             </select>
+            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="originFilter" @change="loadTickets()" aria-label="Filtrar por origem do chamado">
+              <option value="">Todas as origens</option>
+              <option value="portal">Portal</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="email">E-mail</option>
+              <option value="telefone">Telefone</option>
+              <option value="presencial">Presencial</option>
+            </select>
             <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="statusFilter" @change="loadTickets()">
               <option value="">Todos os status</option>
               <option value="aberto">Aberto</option>
@@ -159,7 +179,7 @@
             <article class="rounded-2xl border border-slate-800 bg-slate-950 p-4">
               <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p class="text-xs font-semibold uppercase tracking-wide text-blue-300" x-text="'#' + ticket.id + ' • ' + ticket.category + ' • ' + ticket.priority"></p>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-blue-300" x-text="'#' + ticket.id + ' • ' + ticket.category + ' • ' + ticket.priority + ' • ' + originLabel(ticket.origin)"></p>
                   <h3 class="mt-1 text-lg font-bold" x-text="ticket.title"></h3>
                   <p class="mt-1 text-sm text-slate-300" x-text="ticket.description"></p>
                   <p class="mt-2 text-xs text-slate-500" x-text="ticket.requester_name + ' • ' + ticket.requester_email"></p>
@@ -203,13 +223,14 @@
         message: '',
         messageType: 'success',
         tickets: [],
-        stats: { total: 0, open: 0, by_status: {}, by_priority: {}, by_category: {} },
+        stats: { total: 0, open: 0, by_status: {}, by_priority: {}, by_category: {}, by_origin: {} },
 
         // Filtros usados na listagem de chamados.
         statusFilter: '',
         categoryFilter: '',
         priorityFilter: '',
         assigneeFilter: '',
+        originFilter: '',
         searchTerm: '',
         sortOrder: 'recent',
 
@@ -221,7 +242,8 @@
           priority: 'media',
           requester_name: 'José Ivan',
           requester_email: 'joseivanabrantes@gmail.com',
-          requester_department: 'TI'
+          requester_department: 'TI',
+          origin: 'portal'
         },
 
         // Cards do dashboard calculados a partir das estatísticas da API.
@@ -254,6 +276,7 @@
           if (this.categoryFilter) params.set('category', this.categoryFilter);
           if (this.priorityFilter) params.set('priority', this.priorityFilter);
           if (this.assigneeFilter.trim().length >= 2) params.set('assigned_to', this.assigneeFilter.trim());
+          if (this.originFilter) params.set('origin', this.originFilter);
           if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
 
           const res = await fetch('/tickets?' + params.toString());
@@ -274,6 +297,7 @@
           this.categoryFilter = '';
           this.priorityFilter = '';
           this.assigneeFilter = '';
+          this.originFilter = '';
           this.statusFilter = '';
           await this.loadTickets();
         },
@@ -320,6 +344,10 @@
             return;
           }
           await this.loadAll();
+        },
+
+        originLabel(origin) {
+          return { portal: 'Portal', whatsapp: 'WhatsApp', email: 'E-mail', telefone: 'Telefone', presencial: 'Presencial' }[origin] || origin || 'Portal';
         },
 
         statusLabel(status) {

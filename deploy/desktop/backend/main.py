@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Ivan Helpdesk API",
-    version="0.3.1",
+    version="0.3.2",
     description="Sistema de helpdesk para portfólio — REST API + frontend local",
     lifespan=lifespan,
     docs_url="/docs",
@@ -155,6 +155,7 @@ def list_tickets(
     priority: str | None = Query(None, description="Filtrar por prioridade"),
     requester_email: str | None = Query(None, description="Filtrar por email do solicitante"),
     assigned_to: str | None = Query(None, description="Filtrar por técnico responsável"),
+    origin: str | None = Query(None, description="Filtrar por origem do chamado"),
     search: str | None = Query(None, min_length=2, description="Buscar em título, descrição, nome ou email"),
     sort: str = Query("recent", pattern="^(recent|priority)$", description="Ordenar por recent ou priority"),
     service: TicketService = Depends(get_ticket_service),
@@ -168,6 +169,7 @@ def list_tickets(
         priority=priority,
         requester_email=requester_email,
         assigned_to=assigned_to,
+        origin=origin,
         search=search,
         sort=sort,
     )
@@ -186,6 +188,7 @@ def export_tickets_csv(service: TicketService = Depends(get_ticket_service)):
         "categoria",
         "prioridade",
         "status",
+        "origem",
         "solicitante",
         "email",
         "tecnico",
@@ -202,6 +205,7 @@ def export_tickets_csv(service: TicketService = Depends(get_ticket_service)):
             ticket.category,
             ticket.priority,
             ticket.status,
+            ticket.origin,
             ticket.requester_name,
             ticket.requester_email,
             ticket.assigned_to or "",
