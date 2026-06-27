@@ -26,14 +26,10 @@
   <main class="mx-auto max-w-6xl px-4 py-8">
     <header class="mb-8 flex flex-col gap-4 rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl md:flex-row md:items-center md:justify-between">
       <div>
-        <p class="mb-2 inline-flex rounded-full bg-blue-500/10 px-3 py-1 text-sm font-semibold text-blue-300 shadow-sm ring-1 ring-inset ring-blue-500/20">Portfólio Helpdesk • FastAPI + SQLite</p>
         <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Ivan Helpdesk</h1>
       </div>
       <div class="flex gap-3 text-sm">
       <button class="rounded-xl bg-slate-800 px-4 py-2 font-semibold text-white hover:bg-slate-700" @click="darkMode = !darkMode" x-text="darkMode ? 'Modo Escuro' : 'Modo Claro'"></button>
-      <a class="rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500" href="/docs" target="_blank">Swagger</a>
-      <a class="rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-500" href="/tickets/export.csv" target="_blank">Exportar CSV</a>
-      <button class="rounded-xl bg-slate-800 px-4 py-2 font-semibold text-slate-100 hover:bg-slate-700" @click="loadAll()">Atualizar</button>
       </div>
     </header>
 
@@ -43,19 +39,27 @@
         <form class="space-y-4" @submit.prevent="createTicket()">
           <label class="block">
             <span class="mb-1 block text-sm">Título</span>
-            <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 outline-none" x-model="form.title" required placeholder="Ex.: Computador não liga" />
+            <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 outline-none" x-model="form.title" required />
           </label>
           <button class="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white hover:bg-blue-500" type="submit">Abrir chamado</button>
         </form>
       </section>
 
       <section class="rounded-3xl border border-slate-800 bg-custom-card p-6">
-        <h2 class="mb-4 text-xl font-bold">Chamados</h2>
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-xl font-bold">Chamados</h2>
+          <select class="rounded-xl border border-slate-700 px-3 py-1 text-sm bg-slate-900" x-model="periodFilter" @change="loadTickets()">
+            <option value="hoje">Hoje</option>
+            <option value="7dias">Últimos 7 dias</option>
+            <option value="30dias">Últimos 30 dias</option>
+            <option value="todos">Todos</option>
+          </select>
+        </div>
         <div class="space-y-3">
           <template x-for="ticket in tickets" :key="ticket.id">
             <article class="rounded-2xl border border-slate-800 p-4">
               <h3 class="font-bold" x-text="ticket.title"></h3>
-              <p class="text-sm" x-text="ticket.status"></p>
+              <p class="text-sm">Status: <span x-text="ticket.status"></span> | Criado: <span x-text="new Date(ticket.created_at).toLocaleDateString()"></span></p>
             </article>
           </template>
         </div>
@@ -68,10 +72,13 @@
       return {
         darkMode: false,
         tickets: [],
-        form: { title: '', description: 'Teste de chamado', category: 'software', priority: 'media', requester_name: 'José', requester_email: 'jose@teste.com', origin: 'portal' },
+        periodFilter: 'todos',
+        form: { title: '', description: 'Teste', category: 'software', priority: 'media', requester_name: 'José', requester_email: 'jose@teste.com', origin: 'portal' },
         async init() { await this.loadTickets(); },
         async loadTickets() {
-          const res = await fetch('/tickets');
+          let url = '/tickets';
+          if(this.periodFilter !== 'todos') url += '?period=' + this.periodFilter;
+          const res = await fetch(url);
           const data = await res.json();
           this.tickets = data.tickets || [];
         },
