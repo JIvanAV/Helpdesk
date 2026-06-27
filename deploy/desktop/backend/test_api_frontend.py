@@ -25,7 +25,7 @@ def test_health_reports_current_version():
     payload = response.json()
     assert payload["status"] == "healthy"
     assert payload["service"] == "ivan-helpdesk"
-    assert payload["version"] == "0.3.2"
+    assert payload["version"] == "0.3.3"
 
 
 def test_home_serves_spa_frontend():
@@ -43,8 +43,9 @@ def test_home_serves_spa_frontend():
     assert "Filtrar técnico" in response.text
     assert "assigneeFilter" in response.text
     assert "Técnico responsável" in response.text
-    assert "Histórico de resolução" in response.text
-    assert "Nova atualização da resolução" in response.text
+    assert "Comentários do técnico" in response.text
+    assert "histórico cumulativo" in response.text
+    assert "Novo comentário do técnico" in response.text
     assert "resolution_note" in response.text
     assert "Formato esperado: nome@empresa.com" in response.text
     assert "pattern=\"[^@\\s]+@[^@\\s]+\\.[^@\\s]+\"" in response.text
@@ -136,11 +137,11 @@ def test_ticket_resolution_updates_are_appended_as_history():
 
     first = client.patch(
         f"/tickets/{ticket_id}",
-        json={"status": "em_andamento", "resolution": "Primeira análise registrada."},
+        json={"status": "em_andamento", "assigned_to": "Ivan Suporte", "resolution": "Primeira análise registrada."},
     )
     second = client.patch(
         f"/tickets/{ticket_id}",
-        json={"status": "resolvido", "resolution": "Solução final aplicada."},
+        json={"status": "resolvido", "assigned_to": "Ivan Suporte", "resolution": "Solução final aplicada."},
     )
 
     assert first.status_code == 200
@@ -148,6 +149,9 @@ def test_ticket_resolution_updates_are_appended_as_history():
     resolution = second.json()["resolution"]
     assert "Primeira análise registrada." in resolution
     assert "Solução final aplicada." in resolution
+    assert "Ivan Suporte" in resolution
+    assert "UTC" in resolution
+    assert "---" in resolution
     assert resolution.index("Primeira análise registrada.") < resolution.index("Solução final aplicada.")
 
 

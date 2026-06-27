@@ -62,5 +62,5 @@ class HealthResponse(BaseModel):
     """Health check response."""
     status: str = "healthy"
     service: str = "ivan-helpdesk"
-    version: str = "0.3.2"
+    version: str = "0.3.3"
     database: str = "connected"

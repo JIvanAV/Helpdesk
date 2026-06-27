@@ -182,11 +182,18 @@ class TicketService:
             else:
                 new_resolution = update_data["resolution"].strip()
                 current_res = ticket.resolution or ""
-                # Se já existe, anexa ao histórico para não perder registros
-                if current_res and current_res not in new_resolution:
-                    update_data["resolution"] = f"{current_res}\n\n---\n{new_resolution}"
+                timestamp = datetime.utcnow().strftime("%d/%m/%Y %H:%M UTC")
+                technician = update_data.get("assigned_to") or ticket.assigned_to or "Técnico não informado"
+                history_entry = f"[{timestamp}] {technician}\n{new_resolution}"
+
+                # Se já existe, anexa ao histórico para não perder registros.
+                # Isso transforma o campo em um log cumulativo de comentários técnicos.
+                if current_res and new_resolution not in current_res:
+                    update_data["resolution"] = f"{current_res}\n\n---\n{history_entry}"
+                elif current_res:
+                    update_data["resolution"] = current_res
                 else:
-                    update_data["resolution"] = new_resolution
+                    update_data["resolution"] = history_entry
 
         # Aplica todas as mudanças validadas
         for field, value in update_data.items():
