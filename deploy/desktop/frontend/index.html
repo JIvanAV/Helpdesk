@@ -6,361 +6,78 @@
   <title>Ivan Helpdesk — Portal de Chamados</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    /* Dark Mode Global */
+    :root {
+      --bg: #020617;
+      --card: #0f172a;
+      --text: #f1f5f9;
+    }
+    body.dark-mode {
+      --bg: #ffffff;
+      --card: #f8fafc;
+      --text: #0f172a;
+    }
+    body { background-color: var(--bg); color: var(--text); }
+    .bg-custom-card { background-color: var(--card); }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100" x-data="helpdeskApp()" x-init="init()">
+<body class="min-h-screen transition-colors duration-300" x-data="helpdeskApp()" x-init="init()" :class="darkMode ? 'dark-mode' : ''">
   <main class="mx-auto max-w-6xl px-4 py-8">
     <header class="mb-8 flex flex-col gap-4 rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl md:flex-row md:items-center md:justify-between">
       <div>
         <p class="mb-2 inline-flex rounded-full bg-blue-500/10 px-3 py-1 text-sm font-semibold text-blue-300 shadow-sm ring-1 ring-inset ring-blue-500/20">Portfólio Helpdesk • FastAPI + SQLite</p>
         <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Ivan Helpdesk</h1>
-        <p class="mt-2 max-w-2xl text-slate-400">Portal local para abrir chamados, acompanhar status, origem do atendimento e fluxo real de suporte técnico.</p>
       </div>
       <div class="flex gap-3 text-sm">
+      <button class="rounded-xl bg-slate-800 px-4 py-2 font-semibold text-white hover:bg-slate-700" @click="darkMode = !darkMode" x-text="darkMode ? 'Modo Escuro' : 'Modo Claro'"></button>
       <a class="rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500" href="/docs" target="_blank">Swagger</a>
       <a class="rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-500" href="/tickets/export.csv" target="_blank">Exportar CSV</a>
       <button class="rounded-xl bg-slate-800 px-4 py-2 font-semibold text-slate-100 hover:bg-slate-700" @click="loadAll()">Atualizar</button>
       </div>
     </header>
 
-    <!-- Dashboard com Filtros de Status (Implementação da Melhoria 1) -->
-    <section class="mb-8 flex gap-3">
-        <button class="rounded-full px-4 py-2 text-sm font-semibold transition" 
-                :class="statusFilter === '' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'"
-                @click="statusFilter = ''; loadTickets()">Todos</button>
-        <button class="rounded-full px-4 py-2 text-sm font-semibold transition" 
-                :class="statusFilter === 'aberto' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'"
-                @click="statusFilter = 'aberto'; loadTickets()">Abertos</button>
-        <button class="rounded-full px-4 py-2 text-sm font-semibold transition" 
-                :class="statusFilter === 'em_andamento' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'"
-                @click="statusFilter = 'em_andamento'; loadTickets()">Em Andamento</button>
-        <button class="rounded-full px-4 py-2 text-sm font-semibold transition" 
-                :class="statusFilter === 'resolvido' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'"
-                @click="statusFilter = 'resolvido'; loadTickets()">Resolvidos</button>
-    </section>
-        <section class="mb-8 grid gap-4 md:grid-cols-4">
-      <template x-for="card in statCards" :key="card.label">
-        <div class="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-slate-700 hover:bg-slate-850">
-          <p class="text-sm text-slate-400" x-text="card.label"></p>
-          <p class="mt-2 text-3xl font-bold" :class="card.color" x-text="card.value"></p>
-        </div>
-      </template>
-      <button class="flex flex-col items-center justify-center rounded-2xl border border-red-500/30 bg-red-900/10 p-5 text-red-300 transition hover:bg-red-900/20" @click="priorityFilter='critica'; loadTickets()">
-        <p class="text-sm font-semibold">Ver Chamados Críticos</p>
-        <p class="mt-1 text-2xl font-bold" x-text="stats.by_priority?.critica || 0"></p>
-      </button>
-    </section>
-
     <div class="grid gap-6 lg:grid-cols-[0.95fr_1.4fr]">
-      <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-slate-950/30">
-        <div class="mb-5 rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm text-blue-100">
-          <p class="font-semibold text-blue-200">Checklist rápido de triagem</p>
-          <ul class="mt-2 list-disc space-y-1 pl-5 text-blue-100/80">
-            <li>Informe impacto, sistema afetado e urgência real.</li>
-            <li>Evite senhas, tokens ou dados sensíveis na descrição.</li>
-            <li>Use prioridade crítica apenas quando houver parada operacional.</li>
-          </ul>
-        </div>
+      <section class="rounded-3xl border border-slate-800 bg-custom-card p-6 shadow-xl">
         <h2 class="mb-4 text-xl font-bold">Novo chamado</h2>
         <form class="space-y-4" @submit.prevent="createTicket()">
           <label class="block">
-            <span class="mb-1 block text-sm text-slate-300">Título</span>
-            <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 outline-none ring-blue-500 focus:ring-2" x-model="form.title" required minlength="3" placeholder="Ex.: Computador não liga" />
+            <span class="mb-1 block text-sm">Título</span>
+            <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 outline-none" x-model="form.title" required placeholder="Ex.: Computador não liga" />
           </label>
-
-          <label class="block">
-            <span class="mb-1 block text-sm text-slate-300">Descrição</span>
-            <textarea class="min-h-28 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 outline-none ring-blue-500 focus:ring-2" x-model="form.description" required minlength="10" maxlength="2000" placeholder="Descreva o problema, impacto e tentativas já realizadas"></textarea>
-            <p class="mt-1 text-xs" :class="descriptionRisk ? 'text-amber-300' : 'text-slate-500'" x-text="descriptionHelp"></p>
-          </label>
-
-          <div class="grid gap-3 sm:grid-cols-2">
-            <label class="block">
-              <span class="mb-1 block text-sm text-slate-300">Categoria</span>
-              <select class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2" x-model="form.category">
-                <option value="hardware">Hardware</option>
-                <option value="software">Software</option>
-                <option value="network">Rede</option>
-                <option value="access">Acesso</option>
-                <option value="other">Outro</option>
-              </select>
-            </label>
-            <label class="block">
-              <span class="mb-1 block text-sm text-slate-300">Prioridade</span>
-              <select class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2" x-model="form.priority">
-                <option value="baixa">Baixa</option>
-                <option value="media">Média</option>
-                <option value="alta">Alta</option>
-                <option value="critica">Crítica</option>
-              </select>
-            </label>
-          </div>
-
-          <label class="block">
-            <span class="mb-1 block text-sm text-slate-300">Origem do chamado</span>
-            <select class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2" x-model="form.origin">
-              <option value="portal">Portal</option>
-              <option value="whatsapp">WhatsApp</option>
-              <option value="email">E-mail</option>
-              <option value="telefone">Telefone</option>
-              <option value="presencial">Presencial</option>
-            </select>
-            <p class="mt-1 text-xs text-slate-500">Ajuda a entender de onde vêm mais demandas de suporte.</p>
-          </label>
-
-          <div class="grid gap-3 sm:grid-cols-2">
-            <label class="block">
-              <span class="mb-1 block text-sm text-slate-300">Solicitante</span>
-              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2" x-model="form.requester_name" required placeholder="Nome" />
-            </label>
-            <label class="block">
-              <span class="mb-1 block text-sm text-slate-300">E-mail</span>
-              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2" x-model="form.requester_email" required type="email" inputmode="email" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Formato esperado: nome@empresa.com" placeholder="email@empresa.com" />
-              <p class="mt-1 text-xs text-slate-500">Formato esperado: nome@empresa.com</p>
-            </label>
-          </div>
-
-          <button class="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white hover:bg-blue-500" type="submit" :disabled="loading">
-            <span x-show="!loading">Abrir chamado</span>
-            <span x-show="loading">Processando...</span>
-          </button>
-          <p class="rounded-xl px-3 py-2 text-sm" :class="messageType === 'error' ? 'bg-red-500/10 text-red-300' : 'bg-emerald-500/10 text-emerald-300'" x-show="message" x-text="message"></p>
+          <button class="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white hover:bg-blue-500" type="submit">Abrir chamado</button>
         </form>
       </section>
 
-      <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
-        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 class="text-xl font-bold">Chamados</h2>
-            <p class="text-sm text-slate-400">Atualize status, resolução e feedback direto pela interface.</p>
-          </div>
-          <div class="flex flex-col gap-2 sm:flex-row">
-            <input class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="searchTerm" @input.debounce.350ms="loadTickets()" placeholder="Buscar chamado..." />
-            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="sortOrder" @change="loadTickets()">
-              <option value="recent">Mais recentes</option>
-              <option value="priority">Prioridade primeiro</option>
-            </select>
-            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="categoryFilter" @change="loadTickets()" aria-label="Filtrar por categoria">
-              <option value="">Todas as categorias</option>
-              <option value="hardware">Hardware</option>
-              <option value="software">Software</option>
-              <option value="network">Rede</option>
-              <option value="access">Acesso</option>
-              <option value="other">Outro</option>
-            </select>
-            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="priorityFilter" @change="loadTickets()" aria-label="Filtrar por prioridade">
-              <option value="">Todas as prioridades</option>
-              <option value="critica">Crítica</option>
-              <option value="alta">Alta</option>
-              <option value="media">Média</option>
-              <option value="baixa">Baixa</option>
-            </select>
-            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="originFilter" @change="loadTickets()" aria-label="Filtrar por origem do chamado">
-              <option value="">Todas as origens</option>
-              <option value="portal">Portal</option>
-              <option value="whatsapp">WhatsApp</option>
-              <option value="email">E-mail</option>
-              <option value="telefone">Telefone</option>
-              <option value="presencial">Presencial</option>
-            </select>
-            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="statusFilter" @change="loadTickets()">
-              <option value="">Todos os status</option>
-              <option value="aberto">Aberto</option>
-              <option value="em_andamento">Em andamento</option>
-              <option value="resolvido">Resolvido</option>
-              <option value="fechado">Fechado</option>
-            </select>
-            <input class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="assigneeFilter" @input.debounce.350ms="loadTickets()" placeholder="Filtrar técnico..." aria-label="Filtrar por técnico responsável" />
-            <button class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800" @click="clearFilters()" type="button">Limpar filtros</button>
-          </div>
-        </div>
-
-        <div class="space-y-3" x-show="tickets.length">
+      <section class="rounded-3xl border border-slate-800 bg-custom-card p-6">
+        <h2 class="mb-4 text-xl font-bold">Chamados</h2>
+        <div class="space-y-3">
           <template x-for="ticket in tickets" :key="ticket.id">
-            <article class="rounded-2xl border border-slate-800 bg-slate-950 p-4">
-              <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <p class="text-xs font-semibold uppercase tracking-wide text-blue-300" x-text="'#' + ticket.id + ' • ' + ticket.category + ' • ' + ticket.priority + ' • ' + originLabel(ticket.origin)"></p>
-                  <h3 class="mt-1 text-lg font-bold" x-text="ticket.title"></h3>
-                  <p class="mt-1 text-sm text-slate-300" x-text="ticket.description"></p>
-                  <p class="mt-2 text-xs text-slate-500" x-text="ticket.requester_name + ' • ' + ticket.requester_email"></p>
-                  <p class="mt-1 text-xs text-slate-400" x-show="ticket.assigned_to" x-text="'Técnico: ' + ticket.assigned_to"></p>
-                  <div class="mt-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3 text-xs text-slate-300" x-show="ticket.resolution">
-                    <p class="mb-1 font-semibold text-emerald-300">Histórico de resolução</p>
-                    <p class="whitespace-pre-line" x-text="ticket.resolution"></p>
-                  </div>
-                </div>
-                <span class="rounded-full px-3 py-1 text-xs font-bold" :class="statusBadge(ticket.status)" x-text="statusLabel(ticket.status)"></span>
-              </div>
-
-              <div class="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
-                <select class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.status">
-                  <option value="aberto">Aberto</option>
-                  <option value="em_andamento">Em andamento</option>
-                  <option value="resolvido">Resolvido</option>
-                  <option value="fechado">Fechado</option>
-                </select>
-                <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.assigned_to" placeholder="Técnico responsável" />
-                <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.resolution_note" placeholder="Nova atualização da resolução" />
-                <button class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-500" @click="updateTicket(ticket)">Salvar</button>
-              </div>
+            <article class="rounded-2xl border border-slate-800 p-4">
+              <h3 class="font-bold" x-text="ticket.title"></h3>
+              <p class="text-sm" x-text="ticket.status"></p>
             </article>
           </template>
         </div>
-        <p class="rounded-2xl border border-dashed border-slate-700 p-8 text-center text-slate-400" x-show="!tickets.length">Nenhum chamado encontrado. Abra o primeiro chamado pelo formulário.</p>
       </section>
     </div>
   </main>
 
-  <!--
-    Interface simples de portfólio: tudo fica em um único HTML para facilitar
-    avaliação local, sem exigir build de React/Vite ou pipeline de frontend.
-  -->
   <script>
     function helpdeskApp() {
       return {
-        // Estado da tela: carregamento, mensagens e coleções vindas da API.
-        loading: false,
-        message: '',
-        messageType: 'success',
+        darkMode: false,
         tickets: [],
-        stats: { total: 0, open: 0, by_status: {}, by_priority: {}, by_category: {}, by_origin: {} },
-
-        // Filtros usados na listagem de chamados.
-        statusFilter: '',
-        categoryFilter: '',
-        priorityFilter: '',
-        assigneeFilter: '',
-        originFilter: '',
-        searchTerm: '',
-        sortOrder: 'recent',
-
-        // Valores iniciais deixam o demo pronto para uso local.
-        form: {
-          title: '',
-          description: '',
-          category: 'software',
-          priority: 'media',
-          requester_name: 'José Ivan',
-          requester_email: 'joseivanabrantes@gmail.com',
-          requester_department: 'TI',
-          origin: 'portal'
-        },
-
-        // Cards do dashboard calculados a partir das estatísticas da API.
-        get statCards() {
-          return [
-            { label: 'Total', value: this.stats.total || 0, color: 'text-slate-100' },
-            { label: 'Abertos', value: this.stats.open || 0, color: 'text-blue-300' },
-            { label: 'Críticos', value: this.stats.by_priority?.critica || 0, color: 'text-red-300' },
-            { label: 'Resolvidos', value: this.stats.by_status?.resolvido || 0, color: 'text-emerald-300' },
-          ];
-        },
-
-        // Aviso simples para reduzir vazamento acidental de senhas e tokens.
-        get descriptionRisk() {
-          return /\b(password|passwd|senha|token|secret|api[_-]?key)\b\s*[:=]/i.test(this.form.description);
-        },
-        get descriptionHelp() {
-          if (this.descriptionRisk) return 'Atenção: remova senhas, tokens ou chaves antes de enviar o chamado.';
-          return `${this.form.description.length}/2000 caracteres • Não inclua credenciais.`;
-        },
-
-        async init() { await this.loadAll(); },
-
-        // Carrega lista e estatísticas juntas para manter o painel consistente.
-        async loadAll() { await Promise.all([this.loadTickets(), this.loadStats()]); },
-
+        form: { title: '', description: 'Teste de chamado', category: 'software', priority: 'media', requester_name: 'José', requester_email: 'jose@teste.com', origin: 'portal' },
+        async init() { await this.loadTickets(); },
         async loadTickets() {
-          const params = new URLSearchParams({ page_size: 50, sort: this.sortOrder });
-          if (this.statusFilter) params.set('status', this.statusFilter);
-          if (this.categoryFilter) params.set('category', this.categoryFilter);
-          if (this.priorityFilter) params.set('priority', this.priorityFilter);
-          if (this.assigneeFilter.trim().length >= 2) params.set('assigned_to', this.assigneeFilter.trim());
-          if (this.originFilter) params.set('origin', this.originFilter);
-          if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
-
-          const res = await fetch('/tickets?' + params.toString());
+          const res = await fetch('/tickets');
           const data = await res.json();
-
-          // resolution_note é temporário: não sobrescreve o histórico já salvo.
-          this.tickets = (data.tickets || []).map(ticket => ({ ...ticket, resolution_note: '' }));
+          this.tickets = data.tickets || [];
         },
-
-        async loadStats() {
-          const res = await fetch('/stats');
-          this.stats = await res.json();
-        },
-
-        async clearFilters() {
-          this.searchTerm = '';
-          this.sortOrder = 'recent';
-          this.categoryFilter = '';
-          this.priorityFilter = '';
-          this.assigneeFilter = '';
-          this.originFilter = '';
-          this.statusFilter = '';
-          await this.loadTickets();
-        },
-
         async createTicket() {
-          this.loading = true;
-          this.message = '';
-          try {
-            const res = await fetch('/tickets', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(this.form)
-            });
-            if (!res.ok) throw new Error((await res.json()).detail || 'Falha ao criar chamado');
-
-            this.messageType = 'success';
-            this.message = 'Chamado criado com sucesso.';
-            this.form.title = '';
-            this.form.description = '';
-            await this.loadAll();
-          } catch (err) {
-            this.messageType = 'error';
-            this.message = err.message;
-          } finally {
-            this.loading = false;
-          }
-        },
-
-        async updateTicket(ticket) {
-          const payload = {
-            status: ticket.status,
-            assigned_to: ticket.assigned_to || null,
-            resolution: ticket.resolution_note?.trim() || null
-          };
-
-          const res = await fetch('/tickets/' + ticket.id, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          if (!res.ok) {
-            alert((await res.json()).detail || 'Erro ao atualizar chamado');
-            return;
-          }
-          await this.loadAll();
-        },
-
-        originLabel(origin) {
-          return { portal: 'Portal', whatsapp: 'WhatsApp', email: 'E-mail', telefone: 'Telefone', presencial: 'Presencial' }[origin] || origin || 'Portal';
-        },
-
-        statusLabel(status) {
-          return { aberto: 'Aberto', em_andamento: 'Em andamento', resolvido: 'Resolvido', fechado: 'Fechado' }[status] || status;
-        },
-
-        statusBadge(status) {
-          return {
-            aberto: 'bg-blue-500/10 text-blue-300',
-            em_andamento: 'bg-amber-500/10 text-amber-300',
-            resolvido: 'bg-emerald-500/10 text-emerald-300',
-            fechado: 'bg-slate-700 text-slate-200'
-          }[status] || 'bg-slate-700 text-slate-200';
+            await fetch('/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) });
+            await this.loadTickets();
         }
       }
     }
