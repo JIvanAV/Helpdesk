@@ -1,6 +1,6 @@
 """Service layer for Ivan Helpdesk business logic."""
 
-from datetime import datetime
+from datetime import datetime, time
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_, case
@@ -238,6 +238,10 @@ class TicketService:
         )
         open_count = self.db.query(Ticket).filter(Ticket.status == "aberto").count()
 
+        today_start = datetime.combine(datetime.utcnow().date(), time.min)
+        today_created = self.db.query(Ticket).filter(Ticket.created_at >= today_start).count()
+        today_resolved = self.db.query(Ticket).filter(Ticket.resolved_at >= today_start).count()
+
         return {
             "total": total,
             "open": open_count,
@@ -245,4 +249,8 @@ class TicketService:
             "by_priority": by_priority,
             "by_category": by_category,
             "by_origin": by_origin,
+            "today": {
+                "created": today_created,
+                "resolved": today_resolved,
+            },
         }

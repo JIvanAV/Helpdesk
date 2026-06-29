@@ -25,7 +25,7 @@ def test_health_reports_current_version():
     payload = response.json()
     assert payload["status"] == "healthy"
     assert payload["service"] == "ivan-helpdesk"
-    assert payload["version"] == "0.3.3"
+    assert payload["version"] == "0.3.4"
 
 
 def test_home_serves_spa_frontend():
@@ -59,6 +59,9 @@ def test_home_serves_spa_frontend():
     assert "ivan-helpdesk-theme" in response.text
     assert "localStorage.setItem" in response.text
     assert ":aria-pressed=\"darkMode.toString()\"" in response.text
+    assert "Resumo executivo" in response.text
+    assert "executiveSummaryItems" in response.text
+    assert "Panorama rápido da operação" in response.text
 
 
 def test_ticket_export_csv_download_contains_created_ticket():
@@ -119,7 +122,10 @@ def test_ticket_crud_flow_via_api():
 
     stats_response = client.get("/stats")
     assert stats_response.status_code == 200
-    assert stats_response.json()["total"] >= 1
+    stats_payload = stats_response.json()
+    assert stats_payload["total"] >= 1
+    assert stats_payload["today"]["created"] >= 1
+    assert "resolved" in stats_payload["today"]
 
 
 def test_ticket_resolution_updates_are_appended_as_history():

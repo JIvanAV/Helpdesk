@@ -58,6 +58,22 @@
       </button>
     </section>
 
+    <section class="mb-8 rounded-3xl border border-cyan-500/20 bg-cyan-500/10 p-5 shadow-xl shadow-slate-950/20">
+      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-wide text-cyan-300">Resumo executivo</p>
+          <h2 class="mt-1 text-xl font-bold text-white">Panorama rápido da operação</h2>
+          <p class="mt-1 text-sm text-slate-400">Visão curta para apresentar chamados do dia, andamento e prioridades em uma reunião de suporte.</p>
+        </div>
+        <button class="rounded-xl border border-cyan-400/30 px-3 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-400/10" type="button" @click="loadAll()">Recalcular</button>
+      </div>
+      <ul class="mt-4 grid gap-3 md:grid-cols-4">
+        <template x-for="item in executiveSummaryItems" :key="item">
+          <li class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm font-semibold text-slate-100" x-text="item"></li>
+        </template>
+      </ul>
+    </section>
+
     <div class="grid gap-6 lg:grid-cols-[0.95fr_1.4fr]">
       <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-slate-950/30">
         <div class="mb-5 rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm text-blue-100">
@@ -262,6 +278,16 @@
             { label: 'Abertos', value: this.stats.open || 0, color: 'text-blue-300' },
             { label: 'Críticos', value: this.stats.by_priority?.critica || 0, color: 'text-red-300' },
             { label: 'Resolvidos', value: this.stats.by_status?.resolvido || 0, color: 'text-emerald-300' },
+          ];
+        },
+
+        get executiveSummaryItems() {
+          const today = this.stats.today || {};
+          return [
+            `${today.created || 0} chamados abertos hoje`,
+            `${this.stats.by_status?.em_andamento || 0} em andamento`,
+            `${this.stats.by_priority?.critica || 0} críticos`,
+            `${today.resolved || 0} resolvidos hoje`
           ];
         },
 
