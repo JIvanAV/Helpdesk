@@ -55,6 +55,10 @@ def test_home_serves_spa_frontend():
     assert "Origem do chamado" in response.text
     assert "originFilter" in response.text
     assert "Todas as origens" in response.text
+    assert "toggleTheme()" in response.text
+    assert "ivan-helpdesk-theme" in response.text
+    assert "localStorage.setItem" in response.text
+    assert ":aria-pressed=\"darkMode.toString()\"" in response.text
 
 
 def test_ticket_export_csv_download_contains_created_ticket():
