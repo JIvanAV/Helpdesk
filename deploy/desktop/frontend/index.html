@@ -217,7 +217,7 @@
                 <span class="rounded-full px-3 py-1 text-xs font-bold" :class="statusBadge(ticket.status)" x-text="statusLabel(ticket.status)"></span>
               </div>
 
-              <div class="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
+              <div class="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto_1fr_auto]">
                 <select class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.status">
                   <option value="aberto">Aberto</option>
                   <option value="em_andamento">Em andamento</option>
@@ -225,6 +225,7 @@
                   <option value="fechado">Fechado</option>
                 </select>
                 <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.assigned_to" placeholder="Técnico responsável" />
+                <button class="rounded-xl border border-blue-500/40 bg-blue-500/10 px-4 py-2 text-sm font-bold text-blue-200 hover:bg-blue-500/20" type="button" @click="assumeTicket(ticket)">Assumir chamado</button>
                 <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.resolution_note" placeholder="Novo comentário do técnico" />
                 <button class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-500" @click="updateTicket(ticket)">Salvar</button>
               </div>
@@ -388,6 +389,12 @@
             return;
           }
           await this.loadAll();
+        },
+
+        async assumeTicket(ticket) {
+          ticket.assigned_to = 'José Ivan';
+          ticket.status = 'em_andamento';
+          await this.updateTicket(ticket);
         },
 
         originLabel(origin) {

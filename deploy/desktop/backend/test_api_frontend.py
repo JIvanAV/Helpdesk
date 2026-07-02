@@ -43,6 +43,9 @@ def test_home_serves_spa_frontend():
     assert "Filtrar técnico" in response.text
     assert "assigneeFilter" in response.text
     assert "Técnico responsável" in response.text
+    assert "Assumir chamado" in response.text
+    assert "assumeTicket(ticket)" in response.text
+    assert "José Ivan" in response.text
     assert "Comentários do técnico" in response.text
     assert "histórico cumulativo" in response.text
     assert "Novo comentário do técnico" in response.text
