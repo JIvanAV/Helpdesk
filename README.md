@@ -20,6 +20,8 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Busca por título, descrição, solicitante e e-mail
 - Filtros por status, categoria, prioridade e técnico responsável no dashboard
 - Atribuição de chamados para técnico responsável pela interface
+- Base de conhecimento por categoria com checklists de suporte N1/N2
+- Endpoint `/knowledge-base` para consultar dicas por categoria do chamado
 - Botão para limpar filtros e voltar rapidamente à listagem principal
 - Ordenação por prioridade para destacar chamados críticos
 - Estatísticas de chamados por status, prioridade e categoria
@@ -89,6 +91,13 @@ cd deploy/desktop/backend
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 Acesse: http://localhost:8000/docs (Swagger UI)
+
+A base de conhecimento também fica disponível pela API:
+
+```bash
+curl http://localhost:8000/knowledge-base
+curl http://localhost:8000/knowledge-base/network
+```
 
 ### 5. Rode os testes
 ```bash

@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Ivan Helpdesk API",
-    version="0.3.4",
+    version="0.3.5",
     description="Sistema de helpdesk para portfólio — REST API + frontend local",
     lifespan=lifespan,
     docs_url="/docs",
