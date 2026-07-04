@@ -24,6 +24,7 @@ from schemas import (
     HealthResponse,
 )
 from service import TicketService
+from knowledge_base import get_checklist, list_checklists
 
 
 @asynccontextmanager
@@ -267,6 +268,21 @@ def delete_ticket(
 def get_stats(service: TicketService = Depends(get_ticket_service)):
     """Estatísticas para dashboard."""
     return service.get_stats()
+
+
+@app.get("/knowledge-base", tags=["Knowledge Base"])
+def list_knowledge_base():
+    """Listar checklists de suporte por categoria do chamado."""
+    return {"categories": list_checklists()}
+
+
+@app.get("/knowledge-base/{category}", tags=["Knowledge Base"])
+def get_knowledge_base_category(category: str):
+    """Obter checklist de suporte para uma categoria específica."""
+    checklist = get_checklist(category)
+    if not checklist:
+        raise HTTPException(status_code=404, detail="Categoria não encontrada na base de conhecimento")
+    return checklist
 
 
 # ─── Local Frontend ───

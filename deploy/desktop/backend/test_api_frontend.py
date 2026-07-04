@@ -67,6 +67,22 @@ def test_home_serves_spa_frontend():
     assert "Panorama rápido da operação" in response.text
 
 
+def test_knowledge_base_endpoint_returns_category_checklists():
+    response = client.get("/knowledge-base")
+
+    assert response.status_code == 200
+    categories = response.json()["categories"]
+    assert "network" in categories
+    assert categories["network"]["label"] == "Rede"
+    assert any("ping" in step.lower() for step in categories["network"]["steps"])
+    assert "access" in categories
+    assert "permissões" in " ".join(categories["access"]["steps"]).lower()
+
+    single = client.get("/knowledge-base/hardware")
+    assert single.status_code == 200
+    assert single.json()["label"] == "Hardware"
+
+
 def test_ticket_export_csv_download_contains_created_ticket():
     run_marker = uuid4().hex[:8]
     create_response = client.post(
