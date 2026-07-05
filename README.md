@@ -56,14 +56,30 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 ## Como rodar o aplicativo no seu PC
 
 ### Pré-requisitos
-- Python 3.11+
-- Git
-- (Opcional) Docker para deploy containerizado
+
+| Ferramenta | Versão/uso |
+|---|---|
+| Python | 3.11 ou superior |
+| Git | Clonar o repositório e versionar mudanças |
+| Navegador | Acessar a SPA local e a documentação Swagger |
+| Docker | Opcional, apenas para futuro deploy containerizado |
+
+### Estrutura principal
+
+```txt
+Helpdesk/
+├── deploy/desktop/backend/    # API FastAPI, SQLite, testes de integração
+├── deploy/desktop/frontend/   # SPA local em HTML/Alpine.js
+├── deploy/desktop/data/       # Banco SQLite local de demonstração
+├── docs/                      # Documentação técnica do projeto
+└── tests/                     # Testes de domínio do MVP
+```
 
 ### 1. Clone o repositório
+
 ```bash
-git clone https://github.com/JIvanAV/ivan-helpdesk.git
-cd ivan-helpdesk
+git clone https://github.com/JIvanAV/Helpdesk.git
+cd Helpdesk
 ```
 
 ### 2. Crie e ative o ambiente virtual
