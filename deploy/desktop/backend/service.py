@@ -242,6 +242,15 @@ class TicketService:
         today_created = self.db.query(Ticket).filter(Ticket.created_at >= today_start).count()
         today_resolved = self.db.query(Ticket).filter(Ticket.resolved_at >= today_start).count()
 
+        # Média de tempo para resolução (em horas)
+        # Filtra tickets resolvidos, calcula diferença entre resolved_at e created_at
+        avg_res_time = (
+            self.db.query(func.avg(func.julianday(Ticket.resolved_at) - func.julianday(Ticket.created_at)))
+            .filter(Ticket.resolved_at.isnot(None))
+            .scalar()
+        )
+        avg_res_hours = round(avg_res_time * 24, 2) if avg_res_time else 0.0
+
         return {
             "total": total,
             "open": open_count,
@@ -249,6 +258,7 @@ class TicketService:
             "by_priority": by_priority,
             "by_category": by_category,
             "by_origin": by_origin,
+            "avg_resolution_hours": avg_res_hours,
             "today": {
                 "created": today_created,
                 "resolved": today_resolved,
