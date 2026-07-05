@@ -45,7 +45,7 @@
                 :class="statusFilter === 'resolvido' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'"
                 @click="statusFilter = 'resolvido'; loadTickets()">Resolvidos</button>
     </section>
-        <section class="mb-8 grid gap-4 md:grid-cols-4">
+        <section class="mb-8 grid gap-4 md:grid-cols-5">
       <template x-for="card in statCards" :key="card.label">
         <div class="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-slate-700 hover:bg-slate-850">
           <p class="text-sm text-slate-400" x-text="card.label"></p>
@@ -273,7 +273,7 @@
         message: '',
         messageType: 'success',
         tickets: [],
-        stats: { total: 0, open: 0, by_status: {}, by_priority: {}, by_category: {}, by_origin: {} },
+        stats: { total: 0, open: 0, avg_resolution_hours: 0, by_status: {}, by_priority: {}, by_category: {}, by_origin: {} },
         knowledgeBase: {},
 
         // Filtros usados na listagem de chamados.
@@ -304,7 +304,15 @@
             { label: 'Abertos', value: this.stats.open || 0, color: 'text-blue-300' },
             { label: 'Críticos', value: this.stats.by_priority?.critica || 0, color: 'text-red-300' },
             { label: 'Resolvidos', value: this.stats.by_status?.resolvido || 0, color: 'text-emerald-300' },
+            { label: 'Tempo médio', value: this.avgResolutionLabel, color: 'text-cyan-300' },
           ];
+        },
+
+        get avgResolutionLabel() {
+          const hours = Number(this.stats.avg_resolution_hours || 0);
+          if (hours <= 0) return '0h';
+          if (hours < 1) return `${Math.round(hours * 60)}min`;
+          return `${hours.toFixed(1)}h`;
         },
 
         get executiveSummaryItems() {
@@ -313,7 +321,7 @@
             `${today.created || 0} chamados abertos hoje`,
             `${this.stats.by_status?.em_andamento || 0} em andamento`,
             `${this.stats.by_priority?.critica || 0} críticos`,
-            `${today.resolved || 0} resolvidos hoje`
+            `${this.avgResolutionLabel} de tempo médio`
           ];
         },
 
