@@ -83,36 +83,54 @@ cd Helpdesk
 ```
 
 ### 2. Crie e ative o ambiente virtual
+
 ```bash
-# Windows (PowerShell)
+# Windows PowerShell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 
-# Linux/macOS / Git Bash
+# Git Bash no Windows, Linux ou macOS
 python -m venv .venv
-source .venv/bin/activate
+source .venv/Scripts/activate  # Windows/Git Bash
+# source .venv/bin/activate    # Linux/macOS
 ```
 
-### 3. Instale as dependências
+### 3. Instale as dependências do backend
+
+O backend desktop possui dependências próprias em `deploy/desktop/backend/requirements.txt`.
+
 ```bash
-pip install -e ".[dev]"
-# ou usando uv (mais rápido):
-uv sync --dev
+python -m pip install --upgrade pip
+python -m pip install -r deploy/desktop/backend/requirements.txt
 ```
 
-### 4. Rode o backend (API FastAPI)
+Se preferir usar `uv`:
+
 ```bash
-# Modo desenvolvimento (hot reload)
+uv pip install -r deploy/desktop/backend/requirements.txt
+```
+
+### 4. Rode o backend e a interface local
+
+```bash
 cd deploy/desktop/backend
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn main:app --reload --host 127.0.0.1 --port 8001
 ```
-Acesse: http://localhost:8000/docs (Swagger UI)
+
+Acesse:
+
+| URL | Uso |
+|---|---|
+| http://localhost:8001/ | Interface SPA do Ivan Helpdesk |
+| http://localhost:8001/docs | Swagger UI da API |
+| http://localhost:8001/health | Verificação rápida da API |
+| http://localhost:8001/stats | Métricas do dashboard |
 
 A base de conhecimento também fica disponível pela API:
 
 ```bash
-curl http://localhost:8000/knowledge-base
-curl http://localhost:8000/knowledge-base/network
+curl http://localhost:8001/knowledge-base
+curl http://localhost:8001/knowledge-base/network
 ```
 
 ### 5. Rode os testes
