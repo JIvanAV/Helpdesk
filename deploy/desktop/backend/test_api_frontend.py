@@ -65,6 +65,9 @@ def test_home_serves_spa_frontend():
     assert "Resumo executivo" in response.text
     assert "executiveSummaryItems" in response.text
     assert "Panorama rápido da operação" in response.text
+    assert "Tempo médio" in response.text
+    assert "avgResolutionLabel" in response.text
+    assert "avg_resolution_hours" in response.text
     assert "Base de conhecimento sugerida" in response.text
     assert "Checklist sugerido da base de conhecimento" in response.text
     assert "selectedChecklist" in response.text
@@ -149,6 +152,9 @@ def test_ticket_crud_flow_via_api():
     assert stats_payload["total"] >= 1
     assert stats_payload["today"]["created"] >= 1
     assert "resolved" in stats_payload["today"]
+    assert "avg_resolution_hours" in stats_payload
+    assert isinstance(stats_payload["avg_resolution_hours"], int | float)
+    assert stats_payload["avg_resolution_hours"] >= 0
 
 
 def test_ticket_resolution_updates_are_appended_as_history():

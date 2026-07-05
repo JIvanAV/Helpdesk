@@ -25,6 +25,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Botão para limpar filtros e voltar rapidamente à listagem principal
 - Ordenação por prioridade para destacar chamados críticos
 - Estatísticas de chamados por status, prioridade e categoria
+- Tempo médio de atendimento/resolução exposto no dashboard e no endpoint `/stats`
 - Feedback de atendimento em chamados resolvidos/fechados
 - Cabeçalhos de segurança HTTP no frontend e API
 - Tratamento padronizado para erros de validação e falhas internas
