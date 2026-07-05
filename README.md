@@ -134,14 +134,52 @@ curl http://localhost:8001/knowledge-base/network
 ```
 
 ### 5. Rode os testes
+
+Execute os testes de domínio do MVP a partir da raiz:
+
 ```bash
-# Da raiz do projeto
-pytest -v
-# Com coverage
-pytest --cov=src --cov-report=term-missing
+python -m pytest -v
 ```
 
-### 6. (Opcional) Build e deploy via Docker
+Execute também os testes da API + frontend local:
+
+```bash
+cd deploy/desktop/backend
+python -m pytest -q test_api_frontend.py
+```
+
+### 6. Smoke test rápido depois de iniciar o servidor
+
+Com o backend rodando em `http://localhost:8001`, valide os principais endpoints:
+
+```bash
+curl http://localhost:8001/health
+curl http://localhost:8001/stats
+curl http://localhost:8001/knowledge-base
+```
+
+Resultado esperado em `/health`:
+
+```json
+{
+  "status": "healthy",
+  "service": "ivan-helpdesk",
+  "version": "0.3.5",
+  "database": "connected"
+}
+```
+
+### 7. Problemas comuns
+
+| Sintoma | Solução |
+|---|---|
+| `ModuleNotFoundError: fastapi` | Instale `deploy/desktop/backend/requirements.txt` no ambiente virtual ativo |
+| Porta ocupada | Troque `--port 8001` por outra porta livre, por exemplo `8002` |
+| Página `/` não abre | Confirme que o comando foi executado dentro de `deploy/desktop/backend` |
+| Banco com dados antigos | Use o script `deploy/desktop/backend/reset_db.py` para recriar a base de demo |
+
+### 8. (Opcional) Build e deploy via Docker
+
 ```bash
 # Da raiz do projeto
 docker compose -f deploy/desktop/docker-compose.yml up --build
@@ -149,4 +187,4 @@ docker compose -f deploy/desktop/docker-compose.yml up --build
 
 ---
 
-**Dica:** O backend roda na porta 8000 por padrão. Se precisar mudar, use `--port <outra>` no comando do uvicorn.
+**Dica:** O demo local usa a porta 8001 neste README para evitar conflito com outros serviços. Se precisar mudar, use `--port <outra>` no comando do uvicorn.
