@@ -239,6 +239,7 @@
                   </div>
                 </div>
                 <span class="rounded-full px-3 py-1 text-xs font-bold" :class="statusBadge(ticket.status)" x-text="statusLabel(ticket.status)"></span>
+                <span class="rounded-full px-3 py-1 text-xs font-bold" :class="slaBadge(ticket.sla_status)" x-text="slaLabel(ticket.sla_status)"></span>
               </div>
 
               <div class="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto_1fr_auto]">
@@ -273,7 +274,7 @@
         message: '',
         messageType: 'success',
         tickets: [],
-        stats: { total: 0, open: 0, avg_resolution_hours: 0, by_status: {}, by_priority: {}, by_category: {}, by_origin: {} },
+        stats: { total: 0, open: 0, avg_resolution_hours: 0, by_status: {}, by_priority: {}, by_category: {}, by_origin: {}, by_sla_status: {} },
         knowledgeBase: {},
 
         // Filtros usados na listagem de chamados.
@@ -304,6 +305,7 @@
             { label: 'Abertos', value: this.stats.open || 0, color: 'text-blue-300' },
             { label: 'Críticos', value: this.stats.by_priority?.critica || 0, color: 'text-red-300' },
             { label: 'Resolvidos', value: this.stats.by_status?.resolvido || 0, color: 'text-emerald-300' },
+            { label: 'Atrasados', value: this.stats.by_sla_status?.atrasado || 0, color: 'text-red-300' },
             { label: 'Tempo médio', value: this.avgResolutionLabel, color: 'text-cyan-300' },
           ];
         },
@@ -321,6 +323,7 @@
             `${today.created || 0} chamados abertos hoje`,
             `${this.stats.by_status?.em_andamento || 0} em andamento`,
             `${this.stats.by_priority?.critica || 0} críticos`,
+            `${this.stats.by_sla_status?.atrasado || 0} fora do SLA`,
             `${this.avgResolutionLabel} de tempo médio`
           ];
         },
@@ -459,6 +462,24 @@
             resolvido: 'bg-emerald-500/10 text-emerald-300',
             fechado: 'bg-slate-700 text-slate-200'
           }[status] || 'bg-slate-700 text-slate-200';
+        },
+
+        slaLabel(slaStatus) {
+          return {
+            no_prazo: 'SLA: No prazo',
+            atencao: 'SLA: Atenção',
+            atrasado: 'SLA: Atrasado',
+            finalizado: 'SLA: Finalizado'
+          }[slaStatus] || 'SLA: No prazo';
+        },
+
+        slaBadge(slaStatus) {
+          return {
+            no_prazo: 'bg-emerald-500/10 text-emerald-300',
+            atencao: 'bg-amber-500/10 text-amber-300',
+            atrasado: 'bg-red-500/10 text-red-300',
+            finalizado: 'bg-slate-700 text-slate-200'
+          }[slaStatus] || 'bg-emerald-500/10 text-emerald-300';
         }
       }
     }
