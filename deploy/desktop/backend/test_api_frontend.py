@@ -68,6 +68,11 @@ def test_home_serves_spa_frontend():
     assert "Tempo médio" in response.text
     assert "avgResolutionLabel" in response.text
     assert "avg_resolution_hours" in response.text
+    assert "Atrasados" in response.text
+    assert "by_sla_status" in response.text
+    assert "SLA: No prazo" in response.text
+    assert "slaBadge" in response.text
+    assert "slaLabel(ticket.sla_status)" in response.text
     assert "Base de conhecimento sugerida" in response.text
     assert "Checklist sugerido da base de conhecimento" in response.text
     assert "selectedChecklist" in response.text
