@@ -43,5 +43,22 @@ class Ticket(Base):
         Index("ix_tickets_requester_email_created", "requester_email", "created_at"),
     )
 
+    @property
+    def sla_status(self) -> str:
+        """Classify open ticket SLA from its age for the API/frontend."""
+        if self.status in {"resolvido", "fechado"}:
+            return "finalizado"
+
+        created_at = self.created_at
+        if not created_at:
+            return "no_prazo"
+
+        age_hours = (datetime.utcnow() - created_at.replace(tzinfo=None)).total_seconds() / 3600
+        if age_hours > 48:
+            return "atrasado"
+        if age_hours > 24:
+            return "atencao"
+        return "no_prazo"
+
     def __repr__(self):
         return f"<Ticket(id={self.id}, title='{self.title}', status='{self.status}', priority='{self.priority}')>"

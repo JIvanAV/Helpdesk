@@ -236,6 +236,14 @@ class TicketService:
             .group_by(Ticket.origin)
             .all()
         )
+        by_sla_status = {
+            "no_prazo": 0,
+            "atencao": 0,
+            "atrasado": 0,
+            "finalizado": 0,
+        }
+        for ticket in self.db.query(Ticket).all():
+            by_sla_status[ticket.sla_status] = by_sla_status.get(ticket.sla_status, 0) + 1
         open_count = self.db.query(Ticket).filter(Ticket.status == "aberto").count()
 
         today_start = datetime.combine(datetime.utcnow().date(), time.min)
@@ -258,6 +266,7 @@ class TicketService:
             "by_priority": by_priority,
             "by_category": by_category,
             "by_origin": by_origin,
+            "by_sla_status": by_sla_status,
             "avg_resolution_hours": avg_res_hours,
             "today": {
                 "created": today_created,

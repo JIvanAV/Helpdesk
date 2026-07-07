@@ -41,6 +41,7 @@ class TicketResponse(TicketBase):
     status: str
     assigned_to: Optional[str] = None
     resolution: Optional[str] = None
+    sla_status: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     resolved_at: Optional[datetime] = None

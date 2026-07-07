@@ -155,6 +155,31 @@ def test_ticket_crud_flow_via_api():
     assert "avg_resolution_hours" in stats_payload
     assert isinstance(stats_payload["avg_resolution_hours"], int | float)
     assert stats_payload["avg_resolution_hours"] >= 0
+    assert "by_sla_status" in stats_payload
+    assert "no_prazo" in stats_payload["by_sla_status"]
+
+
+def test_ticket_response_includes_sla_status():
+    run_marker = uuid4().hex[:8]
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": f"SLA visual {run_marker}",
+            "description": "Chamado usado para validar classificação visual de SLA.",
+            "category": "network",
+            "priority": "alta",
+            "requester_name": "QA SLA",
+            "requester_email": f"qa.sla.{run_marker}@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+    payload = create_response.json()
+    assert payload["sla_status"] == "no_prazo"
+
+    ticket_response = client.get(f"/tickets/{payload['id']}")
+    assert ticket_response.status_code == 200
+    assert ticket_response.json()["sla_status"] == "no_prazo"
 
 
 def test_ticket_resolution_updates_are_appended_as_history():
