@@ -27,6 +27,9 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Estatísticas de chamados por status, prioridade e categoria
 - Tempo médio de atendimento/resolução exposto no dashboard e no endpoint `/stats`
 - Feedback de atendimento em chamados resolvidos/fechados
+- Classificação automática de SLA (No prazo, Atenção, Atrasado) para cada chamado
+- Badge visual de SLA no dashboard e nos cartões de chamados
+- Card de "Atrasados" no dashboard com contagem de tickets fora do SLA
 - Cabeçalhos de segurança HTTP no frontend e API
 - Tratamento padronizado para erros de validação e falhas internas
 - CORS restrito aos endereços locais usados no demo
