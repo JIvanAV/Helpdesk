@@ -73,6 +73,9 @@ def test_home_serves_spa_frontend():
     assert "SLA: No prazo" in response.text
     assert "slaBadge" in response.text
     assert "slaLabel(ticket.sla_status)" in response.text
+    assert "Timeline do chamado" in response.text
+    assert "ticket.timeline?.length" in response.text
+    assert "formatDateTime(event.occurred_at)" in response.text
     assert "Base de conhecimento sugerida" in response.text
     assert "Checklist sugerido da base de conhecimento" in response.text
     assert "selectedChecklist" in response.text
@@ -185,6 +188,45 @@ def test_ticket_response_includes_sla_status():
     ticket_response = client.get(f"/tickets/{payload['id']}")
     assert ticket_response.status_code == 200
     assert ticket_response.json()["sla_status"] == "no_prazo"
+
+
+def test_ticket_response_includes_computed_timeline_events():
+    run_marker = uuid4().hex[:8]
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Timeline chamado {run_marker}",
+            "description": "Chamado usado para validar timeline calculada do atendimento.",
+            "category": "access",
+            "priority": "alta",
+            "requester_name": "QA Timeline",
+            "requester_email": f"qa.timeline.{run_marker}@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+    created = create_response.json()
+    assert created["timeline"][0]["label"] == "Chamado criado"
+    assert "QA Timeline" in created["timeline"][0]["description"]
+
+    update_response = client.patch(
+        f"/tickets/{created['id']}",
+        json={
+            "status": "resolvido",
+            "assigned_to": "José Ivan",
+            "resolution": "Acesso revisado, permissão corrigida e usuário validou o login.",
+        },
+    )
+
+    assert update_response.status_code == 200
+    timeline = update_response.json()["timeline"]
+    labels = [event["label"] for event in timeline]
+    assert "Chamado criado" in labels
+    assert "Técnico atribuído" in labels
+    assert "Chamado atualizado" in labels
+    assert "Chamado resolvido" in labels
+    assert any("José Ivan" in event["description"] for event in timeline)
+    assert all("occurred_at" in event for event in timeline)
 
 
 def test_ticket_resolution_updates_are_appended_as_history():
