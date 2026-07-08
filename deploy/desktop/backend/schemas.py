@@ -35,6 +35,13 @@ class TicketUpdate(BaseModel):
     feedback: Optional[int] = Field(default=None, ge=1, le=5, description="Nota de feedback de 1 a 5")
 
 
+class TicketTimelineEvent(BaseModel):
+    """Computed event shown in the ticket timeline."""
+    label: str
+    description: str
+    occurred_at: str
+
+
 class TicketResponse(TicketBase):
     """Schema for ticket responses."""
     id: int
@@ -46,6 +53,7 @@ class TicketResponse(TicketBase):
     updated_at: datetime
     resolved_at: Optional[datetime] = None
     feedback: Optional[int] = None
+    timeline: list[TicketTimelineEvent] = Field(default_factory=list)
 
     # Pydantic v2: permite criar a resposta direto de objetos ORM do SQLAlchemy.
     model_config = ConfigDict(from_attributes=True)

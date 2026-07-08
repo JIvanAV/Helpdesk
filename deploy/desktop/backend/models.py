@@ -60,5 +60,45 @@ class Ticket(Base):
             return "atencao"
         return "no_prazo"
 
+    @property
+    def timeline(self) -> list[dict[str, str]]:
+        """Build a simple audit-style timeline from the ticket's current fields."""
+        events = [
+            {
+                "label": "Chamado criado",
+                "description": f"Solicitante: {self.requester_name}",
+                "occurred_at": self.created_at.isoformat() if self.created_at else "",
+            }
+        ]
+
+        if self.assigned_to:
+            events.append(
+                {
+                    "label": "Técnico atribuído",
+                    "description": f"Responsável: {self.assigned_to}",
+                    "occurred_at": self.updated_at.isoformat() if self.updated_at else "",
+                }
+            )
+
+        if self.updated_at and self.created_at and self.updated_at != self.created_at:
+            events.append(
+                {
+                    "label": "Chamado atualizado",
+                    "description": f"Status atual: {self.status}",
+                    "occurred_at": self.updated_at.isoformat(),
+                }
+            )
+
+        if self.resolved_at:
+            events.append(
+                {
+                    "label": "Chamado resolvido",
+                    "description": "Atendimento finalizado com resolução registrada.",
+                    "occurred_at": self.resolved_at.isoformat(),
+                }
+            )
+
+        return events
+
     def __repr__(self):
         return f"<Ticket(id={self.id}, title='{self.title}', status='{self.status}', priority='{self.priority}')>"
