@@ -80,6 +80,9 @@ def test_home_serves_spa_frontend():
     assert "Checklist sugerido da base de conhecimento" in response.text
     assert "selectedChecklist" in response.text
     assert "loadKnowledgeBase" in response.text
+    assert "Sessão do técnico" in response.text
+    assert "technicianSession" in response.text
+    assert "ivan-helpdesk-technician" in response.text
 
 
 def test_knowledge_base_endpoint_returns_category_checklists():

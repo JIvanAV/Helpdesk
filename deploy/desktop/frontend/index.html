@@ -30,6 +30,21 @@
       </div>
     </header>
 
+    <section class="mb-8 rounded-3xl border border-indigo-500/20 bg-indigo-500/10 p-5 shadow-xl shadow-slate-950/20" aria-label="Sessão do técnico">
+      <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-wide text-indigo-300">Sessão do técnico</p>
+          <h2 class="mt-1 text-xl font-bold text-white">Autenticação simples para demo</h2>
+          <p class="mt-1 text-sm text-slate-400">Identifique quem está atendendo para registrar responsabilidade nos chamados.</p>
+        </div>
+        <label class="block min-w-64">
+          <span class="mb-1 block text-sm text-slate-300">Nome do técnico logado</span>
+          <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="technicianSession.name" @input.debounce.300ms="saveTechnicianSession()" placeholder="Ex.: José Ivan" />
+        </label>
+      </div>
+      <p class="mt-3 text-sm text-indigo-100" x-text="'Sessão atual: ' + currentTechnician"></p>
+    </section>
+
     <!-- Dashboard com Filtros de Status (Implementação da Melhoria 1) -->
     <section class="mb-8 flex gap-3">
         <button class="rounded-full px-4 py-2 text-sm font-semibold transition" 
@@ -289,6 +304,7 @@
         tickets: [],
         stats: { total: 0, open: 0, avg_resolution_hours: 0, by_status: {}, by_priority: {}, by_category: {}, by_origin: {}, by_sla_status: {} },
         knowledgeBase: {},
+        technicianSession: { name: 'José Ivan' },
 
         // Filtros usados na listagem de chamados.
         statusFilter: '',
@@ -354,6 +370,10 @@
           return this.checklistFor(this.form.category);
         },
 
+        get currentTechnician() {
+          return (this.technicianSession.name || '').trim() || 'Técnico não informado';
+        },
+
         checklistFor(category) {
           return this.knowledgeBase?.[category] || null;
         },
@@ -361,7 +381,13 @@
         async init() {
           const savedTheme = localStorage.getItem('ivan-helpdesk-theme');
           this.darkMode = savedTheme ? savedTheme === 'dark' : true;
+          const savedTechnician = localStorage.getItem('ivan-helpdesk-technician');
+          if (savedTechnician) this.technicianSession.name = savedTechnician;
           await this.loadAll();
+        },
+
+        saveTechnicianSession() {
+          localStorage.setItem('ivan-helpdesk-technician', this.currentTechnician);
         },
 
         toggleTheme() {
