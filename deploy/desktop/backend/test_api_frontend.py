@@ -85,6 +85,9 @@ def test_home_serves_spa_frontend():
     assert "ivan-helpdesk-technician" in response.text
     assert "ticket.assigned_to = this.currentTechnician" in response.text
     assert "assigned_to: ticket.assigned_to || this.currentTechnician" in response.text
+    assert "Perfil de acesso" in response.text
+    assert "ivan-helpdesk-role" in response.text
+    assert "technicianSession.role" in response.text
 
 
 def test_knowledge_base_endpoint_returns_category_checklists():
