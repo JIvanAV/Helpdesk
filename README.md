@@ -170,7 +170,7 @@ Resultado esperado em `/health`:
 {
   "status": "healthy",
   "service": "ivan-helpdesk",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "database": "connected"
 }
 ```
