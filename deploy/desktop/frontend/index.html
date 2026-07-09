@@ -463,7 +463,7 @@
         async updateTicket(ticket) {
           const payload = {
             status: ticket.status,
-            assigned_to: ticket.assigned_to || null,
+            assigned_to: ticket.assigned_to || this.currentTechnician,
             resolution: ticket.resolution_note?.trim() || null
           };
 
@@ -481,7 +481,7 @@
         },
 
         async assumeTicket(ticket) {
-          ticket.assigned_to = 'José Ivan';
+          ticket.assigned_to = this.currentTechnician;
           ticket.status = 'em_andamento';
           await this.updateTicket(ticket);
         },
