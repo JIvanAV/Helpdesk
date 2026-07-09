@@ -91,6 +91,8 @@ def test_home_serves_spa_frontend():
     assert "Entrar como técnico" in response.text
     assert "Sair da sessão" in response.text
     assert "logoutTechnician" in response.text
+    assert "sem senha real" in response.text
+    assert "Demo seguro" in response.text
 
 
 def test_knowledge_base_endpoint_returns_category_checklists():
