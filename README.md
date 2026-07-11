@@ -19,6 +19,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Frontend SPA local para abrir, listar e atualizar chamados
 - Autenticação simples de demonstração com técnico/perfil salvos no navegador
 - Registro do técnico logado ao assumir ou atualizar chamados
+- Comentários internos de técnicos anexados ao histórico do chamado
 - Busca por título, descrição, solicitante e e-mail
 - Filtros por status, categoria, prioridade e técnico responsável no dashboard
 - Atribuição de chamados para técnico responsável pela interface
@@ -170,7 +171,7 @@ Resultado esperado em `/health`:
 {
   "status": "healthy",
   "service": "ivan-helpdesk",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "database": "connected"
 }
 ```
