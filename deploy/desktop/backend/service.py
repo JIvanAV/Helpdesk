@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_, case
 
 from models import Ticket
-from schemas import TicketCreate, TicketUpdate, TicketListResponse
+from schemas import TicketCreate, TicketUpdate, TicketCommentCreate, TicketListResponse
 
 
 class TicketService:
@@ -65,6 +65,29 @@ class TicketService:
     def get_ticket(self, ticket_id: int) -> Optional[Ticket]:
         """Get a ticket by ID."""
         return self.db.query(Ticket).filter(Ticket.id == ticket_id).first()
+
+    def _append_internal_comment(self, ticket: Ticket, comment: str, technician: Optional[str] = None) -> None:
+        """Append an internal technician comment without overwriting prior notes."""
+        clean_comment = comment.strip()
+        if not clean_comment:
+            return
+
+        timestamp = datetime.utcnow().strftime("%d/%m/%Y %H:%M UTC")
+        author = (technician or ticket.assigned_to or "Técnico não informado").strip()
+        entry = f"[{timestamp}] [comentário interno] {author}\n{clean_comment}"
+        ticket.internal_comments = f"{ticket.internal_comments}\n\n---\n{entry}" if ticket.internal_comments else entry
+
+    def add_internal_comment(self, ticket_id: int, comment_data: TicketCommentCreate) -> Optional[Ticket]:
+        """Add one internal technician comment to an existing ticket."""
+        ticket = self.get_ticket(ticket_id)
+        if not ticket:
+            return None
+
+        self._append_internal_comment(ticket, comment_data.comment, comment_data.technician)
+        ticket.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(ticket)
+        return ticket
 
     def list_tickets(
         self,
@@ -176,6 +199,15 @@ class TicketService:
                  raise ValueError("Feedback deve ser entre 1 e 5.")
 
         # Lógica de histórico para o campo de resolução
+        if "internal_comment" in update_data:
+            comment = update_data.pop("internal_comment")
+            if comment:
+                self._append_internal_comment(
+                    ticket,
+                    comment,
+                    update_data.get("assigned_to") or ticket.assigned_to,
+                )
+
         if "resolution" in update_data:
             if not update_data["resolution"]:
                 update_data.pop("resolution")
