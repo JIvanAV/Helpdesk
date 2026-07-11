@@ -21,6 +21,7 @@ from schemas import (
     TicketUpdate,
     TicketResponse,
     TicketListResponse,
+    TicketCommentCreate,
     HealthResponse,
 )
 from service import TicketService
@@ -250,6 +251,19 @@ def update_ticket(
         return ticket
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/tickets/{ticket_id}/comments", response_model=TicketResponse, tags=["Tickets"])
+def add_ticket_internal_comment(
+    ticket_id: int,
+    comment_data: TicketCommentCreate,
+    service: TicketService = Depends(get_ticket_service),
+):
+    """Adicionar comentário interno de técnico sem sobrescrever o histórico."""
+    ticket = service.add_internal_comment(ticket_id, comment_data)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Chamado não encontrado")
+    return ticket
 
 
 @app.delete("/tickets/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Tickets"])
