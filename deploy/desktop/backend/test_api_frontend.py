@@ -93,6 +93,10 @@ def test_home_serves_spa_frontend():
     assert "logoutTechnician" in response.text
     assert "sem senha real" in response.text
     assert "Demo seguro" in response.text
+    assert "Comentários internos do chamado" in response.text
+    assert "Comentário interno para a equipe técnica" in response.text
+    assert "addInternalComment(ticket)" in response.text
+    assert "/comments" in response.text
 
 
 def test_knowledge_base_endpoint_returns_category_checklists():
@@ -240,6 +244,42 @@ def test_ticket_response_includes_computed_timeline_events():
     assert "Chamado resolvido" in labels
     assert any("José Ivan" in event["description"] for event in timeline)
     assert all("occurred_at" in event for event in timeline)
+
+
+def test_ticket_internal_comments_are_appended_without_overwriting():
+    run_marker = uuid4().hex[:8]
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Comentario interno {run_marker}",
+            "description": "Chamado usado para validar comentarios internos do tecnico.",
+            "category": "software",
+            "priority": "media",
+            "requester_name": "QA Comentario",
+            "requester_email": f"qa.comment.{run_marker}@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+    ticket_id = create_response.json()["id"]
+
+    first = client.post(
+        f"/tickets/{ticket_id}/comments",
+        json={"technician": "Ivan Suporte", "comment": "Coletar evidência do erro antes de fechar."},
+    )
+    second = client.patch(
+        f"/tickets/{ticket_id}",
+        json={"internal_comment": "Usuário disponível apenas pela manhã.", "assigned_to": "Ivan Suporte"},
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    payload = second.json()
+    assert payload["internal_comment_count"] == 2
+    assert "Coletar evidência do erro antes de fechar." in payload["internal_comments"]
+    assert "Usuário disponível apenas pela manhã." in payload["internal_comments"]
+    assert "[comentário interno] Ivan Suporte" in payload["internal_comments"]
+    assert "---" in payload["internal_comments"]
 
 
 def test_ticket_resolution_updates_are_appended_as_history():
