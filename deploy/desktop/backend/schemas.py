@@ -32,7 +32,14 @@ class TicketUpdate(BaseModel):
     assigned_to: Optional[str] = Field(default=None, max_length=100)
     origin: Optional[str] = None
     resolution: Optional[str] = None
+    internal_comment: Optional[str] = Field(default=None, max_length=1000)
     feedback: Optional[int] = Field(default=None, ge=1, le=5, description="Nota de feedback de 1 a 5")
+
+
+class TicketCommentCreate(BaseModel):
+    """Schema for adding an internal technician comment."""
+    comment: str = Field(..., min_length=3, max_length=1000)
+    technician: Optional[str] = Field(default=None, max_length=100)
 
 
 class TicketTimelineEvent(BaseModel):
@@ -48,6 +55,8 @@ class TicketResponse(TicketBase):
     status: str
     assigned_to: Optional[str] = None
     resolution: Optional[str] = None
+    internal_comments: Optional[str] = None
+    internal_comment_count: int = 0
     sla_status: Optional[str] = None
     created_at: datetime
     updated_at: datetime

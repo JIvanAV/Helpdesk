@@ -29,6 +29,7 @@ class Ticket(Base):
     assigned_to = Column(String(100), nullable=True, index=True)
     origin = Column(String(50), nullable=False, default="portal", index=True)  # email, telefone, whatsapp, portal, presencial
     resolution = Column(Text, nullable=True)
+    internal_comments = Column(Text, nullable=True)
     feedback = Column(Integer, nullable=True)  # 1-5 feedback score
 
     # Timestamps
@@ -99,6 +100,13 @@ class Ticket(Base):
             )
 
         return events
+
+    @property
+    def internal_comment_count(self) -> int:
+        """Count appended internal technician comments."""
+        if not self.internal_comments:
+            return 0
+        return self.internal_comments.count("[comentário interno]")
 
     def __repr__(self):
         return f"<Ticket(id={self.id}, title='{self.title}', status='{self.status}', priority='{self.priority}')>"
