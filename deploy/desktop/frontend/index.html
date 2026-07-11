@@ -300,6 +300,10 @@
                 <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.resolution_note" placeholder="Novo comentário do técnico" />
                 <button class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-500" @click="updateTicket(ticket)">Salvar</button>
               </div>
+              <div class="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
+                <input class="rounded-xl border border-amber-500/30 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.internal_comment_note" maxlength="1000" placeholder="Comentário interno para a equipe técnica" />
+                <button class="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-bold text-amber-100 hover:bg-amber-500/20" type="button" @click="addInternalComment(ticket)">Adicionar comentário interno</button>
+              </div>
             </article>
           </template>
         </div>
@@ -443,8 +447,12 @@
           const res = await fetch('/tickets?' + params.toString());
           const data = await res.json();
 
-          // resolution_note é temporário: não sobrescreve o histórico já salvo.
-          this.tickets = (data.tickets || []).map(ticket => ({ ...ticket, resolution_note: '' }));
+          // Campos temporários não sobrescrevem o histórico já salvo.
+          this.tickets = (data.tickets || []).map(ticket => ({
+            ...ticket,
+            resolution_note: '',
+            internal_comment_note: ''
+          }));
         },
 
         async loadStats() {
@@ -502,6 +510,26 @@
 
           if (!res.ok) {
             alert((await res.json()).detail || 'Erro ao atualizar chamado');
+            return;
+          }
+          await this.loadAll();
+        },
+
+        async addInternalComment(ticket) {
+          const comment = ticket.internal_comment_note?.trim();
+          if (!comment) {
+            alert('Digite um comentário interno antes de salvar.');
+            return;
+          }
+
+          const res = await fetch('/tickets/' + ticket.id + '/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comment, technician: ticket.assigned_to || this.currentTechnician })
+          });
+
+          if (!res.ok) {
+            alert((await res.json()).detail || 'Erro ao adicionar comentário interno');
             return;
           }
           await this.loadAll();
