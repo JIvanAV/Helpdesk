@@ -278,6 +278,11 @@
                     <p class="mb-2 text-[11px] text-slate-500">Cada nova atualização é anexada com data e responsável, sem sobrescrever registros anteriores.</p>
                     <p class="whitespace-pre-line" x-text="ticket.resolution"></p>
                   </div>
+                  <details class="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-50" x-show="ticket.internal_comments">
+                    <summary class="cursor-pointer font-semibold text-amber-200">Comentários internos do chamado</summary>
+                    <p class="mt-2 text-[11px] text-amber-100/70">Notas privadas de triagem para o time técnico, separadas da resolução entregue ao solicitante.</p>
+                    <p class="mt-2 whitespace-pre-line text-amber-50/90" x-text="ticket.internal_comments"></p>
+                  </details>
                 </div>
                 <span class="rounded-full px-3 py-1 text-xs font-bold" :class="statusBadge(ticket.status)" x-text="statusLabel(ticket.status)"></span>
                 <span class="rounded-full px-3 py-1 text-xs font-bold" :class="slaBadge(ticket.sla_status)" x-text="slaLabel(ticket.sla_status)"></span>
