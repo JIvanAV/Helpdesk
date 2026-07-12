@@ -66,15 +66,27 @@ class TicketService:
         """Get a ticket by ID."""
         return self.db.query(Ticket).filter(Ticket.id == ticket_id).first()
 
+    @staticmethod
+    def _human_timestamp() -> str:
+        """Format timestamps used in notes shown to the support team."""
+        return datetime.utcnow().strftime("%d/%m/%Y %H:%M UTC")
+
+    @staticmethod
+    def _technician_name(*candidates: Optional[str]) -> str:
+        """Return the first filled technician name, or a safe fallback."""
+        for name in candidates:
+            if name and name.strip():
+                return name.strip()
+        return "Técnico não informado"
+
     def _append_internal_comment(self, ticket: Ticket, comment: str, technician: Optional[str] = None) -> None:
         """Append an internal technician comment without overwriting prior notes."""
         clean_comment = comment.strip()
         if not clean_comment:
             return
 
-        timestamp = datetime.utcnow().strftime("%d/%m/%Y %H:%M UTC")
-        author = (technician or ticket.assigned_to or "Técnico não informado").strip()
-        entry = f"[{timestamp}] [comentário interno] {author}\n{clean_comment}"
+        author = self._technician_name(technician, ticket.assigned_to)
+        entry = f"[{self._human_timestamp()}] [comentário interno] {author}\n{clean_comment}"
         ticket.internal_comments = f"{ticket.internal_comments}\n\n---\n{entry}" if ticket.internal_comments else entry
 
     def add_internal_comment(self, ticket_id: int, comment_data: TicketCommentCreate) -> Optional[Ticket]:
@@ -214,9 +226,8 @@ class TicketService:
             else:
                 new_resolution = update_data["resolution"].strip()
                 current_res = ticket.resolution or ""
-                timestamp = datetime.utcnow().strftime("%d/%m/%Y %H:%M UTC")
-                technician = update_data.get("assigned_to") or ticket.assigned_to or "Técnico não informado"
-                history_entry = f"[{timestamp}] {technician}\n{new_resolution}"
+                technician = self._technician_name(update_data.get("assigned_to"), ticket.assigned_to)
+                history_entry = f"[{self._human_timestamp()}] {technician}\n{new_resolution}"
 
                 # Se já existe, anexa ao histórico para não perder registros.
                 # Isso transforma o campo em um log cumulativo de comentários técnicos.
