@@ -1,0 +1,14 @@
+.git/
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.DS_Store
+
+deploy/desktop/data/*.db
+deploy/desktop/logs/
+debug_*.html
+debug_*.py
+job_search*.py
+jobs_result.json
