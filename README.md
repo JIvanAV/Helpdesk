@@ -37,6 +37,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Tratamento padronizado para erros de validação e falhas internas
 - CORS restrito aos endereços locais usados no demo
 - Dockerfile e `docker-compose.yml` iniciais para executar o demo em container
+- Revisão leve de qualidade para deixar API, service layer e SPA mais legíveis
 
 ## MVP inicial
 
@@ -79,7 +80,7 @@ Helpdesk/
 ├── deploy/desktop/backend/    # API FastAPI, SQLite, testes de integração
 ├── deploy/desktop/frontend/   # SPA local em HTML/Alpine.js
 ├── deploy/desktop/data/       # Banco SQLite local de demonstração
-├── docs/                      # Documentação técnica do projeto
+├── docs/                      # Documentação técnica e revisão de qualidade do projeto
 └── tests/                     # Testes de domínio do MVP
 ```
 
