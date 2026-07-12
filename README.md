@@ -36,6 +36,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Cabeçalhos de segurança HTTP no frontend e API
 - Tratamento padronizado para erros de validação e falhas internas
 - CORS restrito aos endereços locais usados no demo
+- Dockerfile e `docker-compose.yml` iniciais para executar o demo em container
 
 ## MVP inicial
 
@@ -57,7 +58,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 6. Filtros por status/prioridade
 7. Comentários nos chamados
 8. Histórico de alterações
-9. Dockerfile e docker-compose
+9. Dockerfile e docker-compose ✅ demo local containerizado na porta 8001
 10. CI com GitHub Actions
 
 ## Como rodar o aplicativo no seu PC
@@ -187,9 +188,38 @@ Resultado esperado em `/health`:
 
 ### 8. (Opcional) Build e deploy via Docker
 
+O projeto possui um `Dockerfile` em `deploy/desktop/Dockerfile` e um `docker-compose.yml` em `deploy/desktop/docker-compose.yml` para executar a API + SPA local em container.
+
 ```bash
 # Da raiz do projeto
-docker compose -f deploy/desktop/docker-compose.yml up --build
+cd deploy/desktop
+docker compose up --build
+```
+
+Acesse o demo containerizado em:
+
+| URL | Uso |
+|---|---|
+| http://localhost:8001/ | Interface SPA do Ivan Helpdesk |
+| http://localhost:8001/docs | Swagger UI da API |
+| http://localhost:8001/health | Health check usado pelo container |
+
+Os dados SQLite do container ficam em um volume Docker nomeado:
+
+```txt
+ivan-helpdesk-data
+```
+
+Para parar sem apagar os dados:
+
+```bash
+docker compose down
+```
+
+Para recriar tudo do zero, inclusive o volume local do demo:
+
+```bash
+docker compose down -v
 ```
 
 ---
