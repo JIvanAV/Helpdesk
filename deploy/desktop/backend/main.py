@@ -159,7 +159,8 @@ def list_tickets(
     assigned_to: str | None = Query(None, description="Filtrar por técnico responsável"),
     origin: str | None = Query(None, description="Filtrar por origem do chamado"),
     search: str | None = Query(None, min_length=2, description="Buscar em título, descrição, nome ou email"),
-    sort: str = Query("recent", pattern="^(recent|priority)$", description="Ordenar por recent ou priority"),
+    # Parâmetros de ordenação: recent (padrão) ou priority (alta primeiro)
+    ordem: str = Query("recent", pattern="^(recent|priority)$", alias="sort"),
     service: TicketService = Depends(get_ticket_service),
 ):
     """Listar chamados com paginação e filtros."""
@@ -173,7 +174,7 @@ def list_tickets(
         assigned_to=assigned_to,
         origin=origin,
         search=search,
-        sort=sort,
+        sort=ordem,
     )
 
 
