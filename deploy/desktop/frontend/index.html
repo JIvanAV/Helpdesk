@@ -318,6 +318,27 @@
   -->
   <script>
     function helpdeskApp() {
+      const LABELS = {
+        origin: { portal: 'Portal', whatsapp: 'WhatsApp', email: 'E-mail', telefone: 'Telefone', presencial: 'Presencial' },
+        status: { aberto: 'Aberto', em_andamento: 'Em andamento', resolvido: 'Resolvido', fechado: 'Fechado' },
+        sla: { no_prazo: 'SLA: No prazo', atencao: 'SLA: Atenção', atrasado: 'SLA: Atrasado', finalizado: 'SLA: Finalizado' }
+      };
+
+      const BADGES = {
+        status: {
+          aberto: 'bg-blue-500/10 text-blue-300',
+          em_andamento: 'bg-amber-500/10 text-amber-300',
+          resolvido: 'bg-emerald-500/10 text-emerald-300',
+          fechado: 'bg-slate-700 text-slate-200'
+        },
+        sla: {
+          no_prazo: 'bg-emerald-500/10 text-emerald-300',
+          atencao: 'bg-amber-500/10 text-amber-300',
+          atrasado: 'bg-red-500/10 text-red-300',
+          finalizado: 'bg-slate-700 text-slate-200'
+        }
+      };
+
       return {
         darkMode: true,
         loading: false,
@@ -542,7 +563,7 @@
         },
 
         originLabel(origin) {
-          return { portal: 'Portal', whatsapp: 'WhatsApp', email: 'E-mail', telefone: 'Telefone', presencial: 'Presencial' }[origin] || origin || 'Portal';
+          return LABELS.origin[origin] || origin || 'Portal';
         },
 
         formatDateTime(value) {
@@ -553,34 +574,19 @@
         },
 
         statusLabel(status) {
-          return { aberto: 'Aberto', em_andamento: 'Em andamento', resolvido: 'Resolvido', fechado: 'Fechado' }[status] || status;
+          return LABELS.status[status] || status;
         },
 
         statusBadge(status) {
-          return {
-            aberto: 'bg-blue-500/10 text-blue-300',
-            em_andamento: 'bg-amber-500/10 text-amber-300',
-            resolvido: 'bg-emerald-500/10 text-emerald-300',
-            fechado: 'bg-slate-700 text-slate-200'
-          }[status] || 'bg-slate-700 text-slate-200';
+          return BADGES.status[status] || 'bg-slate-700 text-slate-200';
         },
 
         slaLabel(slaStatus) {
-          return {
-            no_prazo: 'SLA: No prazo',
-            atencao: 'SLA: Atenção',
-            atrasado: 'SLA: Atrasado',
-            finalizado: 'SLA: Finalizado'
-          }[slaStatus] || 'SLA: No prazo';
+          return LABELS.sla[slaStatus] || LABELS.sla.no_prazo;
         },
 
         slaBadge(slaStatus) {
-          return {
-            no_prazo: 'bg-emerald-500/10 text-emerald-300',
-            atencao: 'bg-amber-500/10 text-amber-300',
-            atrasado: 'bg-red-500/10 text-red-300',
-            finalizado: 'bg-slate-700 text-slate-200'
-          }[slaStatus] || 'bg-emerald-500/10 text-emerald-300';
+          return BADGES.sla[slaStatus] || BADGES.sla.no_prazo;
         }
       }
     }
