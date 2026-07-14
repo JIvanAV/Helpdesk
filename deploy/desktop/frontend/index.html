@@ -509,6 +509,16 @@
           await this.loadTickets();
         },
 
+        setMessage(type, text) {
+          this.messageType = type;
+          this.message = text;
+        },
+
+        resetTicketForm() {
+          this.form.title = '';
+          this.form.description = '';
+        },
+
         async createTicket() {
           this.loading = true;
           this.message = '';
@@ -520,14 +530,11 @@
             });
             if (!res.ok) throw new Error((await res.json()).detail || 'Falha ao criar chamado');
 
-            this.messageType = 'success';
-            this.message = 'Chamado criado com sucesso.';
-            this.form.title = '';
-            this.form.description = '';
+            this.setMessage('success', 'Chamado criado com sucesso.');
+            this.resetTicketForm();
             await this.loadAll();
           } catch (err) {
-            this.messageType = 'error';
-            this.message = err.message;
+            this.setMessage('error', err.message);
           } finally {
             this.loading = false;
           }
