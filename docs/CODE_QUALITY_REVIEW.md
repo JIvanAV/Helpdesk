@@ -21,6 +21,7 @@ Ajustar o código para parecer mais próximo de uma manutenção manual e consci
 | API FastAPI | Parâmetro interno de ordenação separado do alias público `sort` | Deixa claro que o contrato HTTP continua igual, mas o código interno fica mais legível |
 | Service layer | Helpers para timestamp e técnico responsável | Reduz repetição e evita fallback inconsistente em comentários/resoluções |
 | Frontend SPA | Mapas de labels e badges | Facilita futuras alterações de texto/estilo sem procurar vários objetos inline |
+| Autenticação demo | Constantes `SESSION_KEYS`, sessão padrão e helper `authStorage` | Separa a regra de armazenamento da interface, mantendo o login mock fácil de explicar para recrutadores |
 | Testes | Testes direcionados e smoke da SPA após cada alteração | Garante que a refatoração não mudou comportamento |
 
 ## Regras para próximas evoluções
