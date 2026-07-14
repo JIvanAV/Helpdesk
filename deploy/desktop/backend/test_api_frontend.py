@@ -87,6 +87,9 @@ def test_home_serves_spa_frontend():
     assert "assigned_to: ticket.assigned_to || this.currentTechnician" in response.text
     assert "Perfil de acesso" in response.text
     assert "ivan-helpdesk-role" in response.text
+    assert "SESSION_KEYS" in response.text
+    assert "authStorage" in response.text
+    assert "DEFAULT_TECHNICIAN_SESSION" in response.text
     assert "technicianSession.role" in response.text
     assert "Entrar como técnico" in response.text
     assert "Sair da sessão" in response.text
