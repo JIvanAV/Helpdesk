@@ -18,6 +18,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - API REST com FastAPI e persistência SQLite local
 - Frontend SPA local para abrir, listar e atualizar chamados
 - Autenticação simples de demonstração com técnico/perfil salvos no navegador
+- Login demo revisado com armazenamento centralizado (`SESSION_KEYS`/`authStorage`) para facilitar manutenção futura
 - Registro do técnico logado ao assumir ou atualizar chamados
 - Comentários internos de técnicos anexados ao histórico do chamado
 - Busca por título, descrição, solicitante e e-mail
