@@ -318,6 +318,14 @@
   -->
   <script>
     function helpdeskApp() {
+      const SESSION_KEYS = {
+        technician: 'ivan-helpdesk-technician',
+        role: 'ivan-helpdesk-role',
+        theme: 'ivan-helpdesk-theme'
+      };
+
+      const DEFAULT_TECHNICIAN_SESSION = { name: 'José Ivan', role: 'tecnico' };
+
       const LABELS = {
         origin: { portal: 'Portal', whatsapp: 'WhatsApp', email: 'E-mail', telefone: 'Telefone', presencial: 'Presencial' },
         status: { aberto: 'Aberto', em_andamento: 'Em andamento', resolvido: 'Resolvido', fechado: 'Fechado' },
@@ -339,6 +347,23 @@
         }
       };
 
+      const authStorage = {
+        load() {
+          return {
+            name: localStorage.getItem(SESSION_KEYS.technician) || DEFAULT_TECHNICIAN_SESSION.name,
+            role: localStorage.getItem(SESSION_KEYS.role) || DEFAULT_TECHNICIAN_SESSION.role
+          };
+        },
+        save(name, role) {
+          localStorage.setItem(SESSION_KEYS.technician, name);
+          localStorage.setItem(SESSION_KEYS.role, role);
+        },
+        clear() {
+          localStorage.removeItem(SESSION_KEYS.technician);
+          localStorage.removeItem(SESSION_KEYS.role);
+        }
+      };
+
       return {
         darkMode: true,
         loading: false,
@@ -347,7 +372,7 @@
         tickets: [],
         stats: { total: 0, open: 0, avg_resolution_hours: 0, by_status: {}, by_priority: {}, by_category: {}, by_origin: {}, by_sla_status: {} },
         knowledgeBase: {},
-        technicianSession: { name: 'José Ivan', role: 'tecnico' },
+        technicianSession: { ...DEFAULT_TECHNICIAN_SESSION },
 
         // Filtros usados na listagem de chamados.
         statusFilter: '',
@@ -358,34 +383,85 @@
         searchTerm: '',
         sortOrder: 'recent',
 
-        // Gestão de Sessão do Técnico (Autenticação Mock)
-                // Refatorado para maior legibilidade e manutenção manual
-                const SESSION_KEYS = {
-                  TECHNICIAN: 'ivan-helpdesk-technician',
-                  ROLE: 'ivan-helpdesk-role',
-                  THEME: 'ivan-helpdesk-theme'
-                };
+        // Valores iniciais deixam o demo pronto para uso local.
+        form: {
+          title: '',
+          description: '',
+          category: 'software',
+          priority: 'media',
+          requester_name: 'José Ivan',
+          requester_email: 'joseivanabrantes@gmail.com',
+          requester_department: 'TI',
+          origin: 'portal'
+        },
 
-                const auth = {
-                  saveSession(name, role) {
-                    localStorage.setItem(SESSION_KEYS.TECHNICIAN, name);
-                    localStorage.setItem(SESSION_KEYS.ROLE, role);
-                  },
-                  getSession() {
-                    return {
-                      name: localStorage.getItem(SESSION_KEYS.TECHNICIAN) || 'José Ivan',
-                      role: localStorage.getItem(SESSION_KEYS.ROLE) || 'tecnico'
-                    };
-                  },
-                  clearSession() {
-                    localStorage.removeItem(SESSION_KEYS.TECHNICIAN);
-                    localStorage.removeItem(SESSION_KEYS.ROLE);
-                  }
-                };
+        get statCards() {
+          return [
+            { label: 'Total', value: this.stats.total || 0, color: 'text-slate-100' },
+            { label: 'Abertos', value: this.stats.open || 0, color: 'text-blue-300' },
+            { label: 'Críticos', value: this.stats.by_priority?.critica || 0, color: 'text-red-300' },
+            { label: 'Resolvidos', value: this.stats.by_status?.resolvido || 0, color: 'text-emerald-300' },
+            { label: 'Atrasados', value: this.stats.by_sla_status?.atrasado || 0, color: 'text-red-300' },
+            { label: 'Tempo médio', value: this.avgResolutionLabel, color: 'text-cyan-300' },
+          ];
+        },
+
+        get avgResolutionLabel() {
+          const hours = Number(this.stats.avg_resolution_hours || 0);
+          if (hours <= 0) return '0h';
+          if (hours < 1) return `${Math.round(hours * 60)}min`;
+          return `${hours.toFixed(1)}h`;
+        },
+
+        get executiveSummaryItems() {
+          const today = this.stats.today || {};
+          return [
+            `${today.created || 0} chamados abertos hoje`,
+            `${this.stats.by_status?.em_andamento || 0} em andamento`,
+            `${this.stats.by_priority?.critica || 0} críticos`,
+            `${this.stats.by_sla_status?.atrasado || 0} fora do SLA`,
+            `${this.avgResolutionLabel} de tempo médio`
+          ];
+        },
+
+        get descriptionRisk() {
+          return /\b(password|passwd|senha|token|secret|api[_-]?key)\b\s*[:=]/i.test(this.form.description);
+        },
+        get descriptionHelp() {
+          if (this.descriptionRisk) return 'Atenção: remova senhas, tokens ou chaves antes de enviar o chamado.';
+          return `${this.form.description.length}/2000 caracteres • Não inclua credenciais.`;
+        },
+
+        get selectedChecklist() {
+          return this.checklistFor(this.form.category);
+        },
+
+        get currentTechnician() {
+          return (this.technicianSession.name || '').trim() || 'Técnico não informado';
+        },
+
+        checklistFor(category) {
+          return this.knowledgeBase?.[category] || null;
+        },
+
+        async init() {
+          this.technicianSession = authStorage.load();
+          this.darkMode = localStorage.getItem(SESSION_KEYS.theme) !== 'light';
+          await this.loadAll();
+        },
+
+        saveTechnicianSession() {
+          authStorage.save(this.currentTechnician, this.technicianSession.role);
+        },
+
+        logoutTechnician() {
+          authStorage.clear();
+          this.technicianSession = { ...DEFAULT_TECHNICIAN_SESSION };
+        },
 
         toggleTheme() {
           this.darkMode = !this.darkMode;
-          localStorage.setItem('ivan-helpdesk-theme', this.darkMode ? 'dark' : 'light');
+          localStorage.setItem(SESSION_KEYS.theme, this.darkMode ? 'dark' : 'light');
         },
 
         // Carrega lista, estatísticas e base de conhecimento juntas para manter o painel consistente.
