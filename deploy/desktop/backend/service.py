@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_, case
 
-from models import Ticket
+from models import Ticket, TicketAuditEvent
 from schemas import TicketCreate, TicketUpdate, TicketCommentCreate, TicketListResponse
 
 
@@ -75,15 +75,55 @@ class TicketService:
                 return name.strip()
         return "Técnico não informado"
 
-    def _append_internal_comment(self, ticket: Ticket, comment: str, technician: Optional[str] = None) -> None:
+    def _append_internal_comment(self, ticket: Ticket, comment: str, technician: Optional[str] = None) -> Optional[str]:
         """Append an internal technician comment without overwriting prior notes."""
         clean_comment = comment.strip()
         if not clean_comment:
-            return
+            return None
 
         author = self._technician_name(technician, ticket.assigned_to)
         entry = f"[{self._human_timestamp()}] [comentário interno] {author}\n{clean_comment}"
         ticket.internal_comments = f"{ticket.internal_comments}\n\n---\n{entry}" if ticket.internal_comments else entry
+        return author
+
+    def _add_audit_event(
+        self,
+        ticket: Ticket,
+        event_type: str,
+        description: str,
+        technician: Optional[str] = None,
+    ) -> None:
+        """Record one append-only ticket audit event."""
+        self.db.add(
+            TicketAuditEvent(
+                ticket_id=ticket.id,
+                event_type=event_type,
+                description=description,
+                technician=self._technician_name(technician) if technician else None,
+            )
+        )
+
+    def _describe_update_events(self, ticket: Ticket, update_data: dict, previous: dict) -> list[tuple[str, str]]:
+        """Build readable audit descriptions for changed ticket fields."""
+        labels = {
+            "status": "Status",
+            "priority": "Prioridade",
+            "category": "Categoria",
+            "origin": "Origem",
+            "assigned_to": "Responsável",
+            "feedback": "Feedback",
+        }
+        events = []
+        for field, label in labels.items():
+            if field in update_data and update_data[field] != previous.get(field):
+                before = previous.get(field) or "não informado"
+                after = update_data[field] or "não informado"
+                events.append(("field_change", f"{label} alterado de '{before}' para '{after}'."))
+        if "resolution" in update_data and update_data["resolution"] != previous.get("resolution"):
+            events.append(("resolution", "Histórico de resolução recebeu uma nova anotação técnica."))
+        if "internal_comment" in update_data:
+            events.append(("internal_comment", "Comentário interno adicionado ao chamado."))
+        return events
 
     def add_internal_comment(self, ticket_id: int, comment_data: TicketCommentCreate) -> Optional[Ticket]:
         """Add one internal technician comment to an existing ticket."""
@@ -91,7 +131,14 @@ class TicketService:
         if not ticket:
             return None
 
-        self._append_internal_comment(ticket, comment_data.comment, comment_data.technician)
+        author = self._append_internal_comment(ticket, comment_data.comment, comment_data.technician)
+        if author:
+            self._add_audit_event(
+                ticket,
+                "internal_comment",
+                "Comentário interno adicionado ao chamado.",
+                author,
+            )
         ticket.updated_at = datetime.utcnow()
         self.db.commit()
         self.db.refresh(ticket)
@@ -180,6 +227,17 @@ class TicketService:
 
         # Converte para dict ignorando campos que não foram enviados na requisição
         update_data = ticket_update.model_dump(exclude_unset=True)
+        previous = {
+            "status": ticket.status,
+            "priority": ticket.priority,
+            "category": ticket.category,
+            "origin": ticket.origin,
+            "assigned_to": ticket.assigned_to,
+            "feedback": ticket.feedback,
+            "resolution": ticket.resolution,
+        }
+        audit_author = update_data.get("assigned_to") or ticket.assigned_to
+        internal_comment_author = None
 
         # Validação centralizada de campos de texto/status
         if "category" in update_data and update_data["category"]:
@@ -210,7 +268,7 @@ class TicketService:
         if "internal_comment" in update_data:
             comment = update_data.pop("internal_comment")
             if comment:
-                self._append_internal_comment(
+                internal_comment_author = self._append_internal_comment(
                     ticket,
                     comment,
                     update_data.get("assigned_to") or ticket.assigned_to,
@@ -234,11 +292,18 @@ class TicketService:
                 else:
                     update_data["resolution"] = history_entry
 
+        audit_events = self._describe_update_events(ticket, update_data, previous)
+        if internal_comment_author:
+            audit_events.append(("internal_comment", "Comentário interno adicionado ao chamado."))
+
         # Aplica todas as mudanças validadas
         for field, value in update_data.items():
             setattr(ticket, field, value)
 
         ticket.updated_at = datetime.utcnow()
+        for event_type, description in audit_events:
+            self._add_audit_event(ticket, event_type, description, audit_author)
+
         self.db.commit()
         self.db.refresh(ticket)
         return ticket
