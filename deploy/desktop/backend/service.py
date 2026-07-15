@@ -252,63 +252,49 @@ class TicketService:
         self.db.commit()
         return True
 
-    def get_stats(self) -> dict:
-        """Get ticket statistics for dashboard."""
-        total = self.db.query(Ticket).count()
-        by_status = dict(
-            self.db.query(Ticket.status, func.count(Ticket.id))
-            .group_by(Ticket.status)
-            .all()
-        )
-        by_priority = dict(
-            self.db.query(Ticket.priority, func.count(Ticket.id))
-            .group_by(Ticket.priority)
-            .all()
-        )
-        by_category = dict(
-            self.db.query(Ticket.category, func.count(Ticket.id))
-            .group_by(Ticket.category)
-            .all()
-        )
-        by_origin = dict(
-            self.db.query(Ticket.origin, func.count(Ticket.id))
-            .group_by(Ticket.origin)
-            .all()
-        )
-        by_sla_status = {
+    def _count_by(self, column) -> dict:
+        """Return dashboard counts grouped by one ticket column."""
+        return dict(self.db.query(column, func.count(Ticket.id)).group_by(column).all())
+
+    def _count_by_sla_status(self) -> dict[str, int]:
+        """Count computed SLA buckets without persisting stale SLA state."""
+        buckets = {
             "no_prazo": 0,
             "atencao": 0,
             "atrasado": 0,
             "finalizado": 0,
         }
         for ticket in self.db.query(Ticket).all():
-            by_sla_status[ticket.sla_status] = by_sla_status.get(ticket.sla_status, 0) + 1
-        open_count = self.db.query(Ticket).filter(Ticket.status == "aberto").count()
+            buckets[ticket.sla_status] = buckets.get(ticket.sla_status, 0) + 1
+        return buckets
 
+    def _today_activity(self) -> dict[str, int]:
+        """Count tickets created and resolved since the start of the UTC day."""
         today_start = datetime.combine(datetime.utcnow().date(), time.min)
-        today_created = self.db.query(Ticket).filter(Ticket.created_at >= today_start).count()
-        today_resolved = self.db.query(Ticket).filter(Ticket.resolved_at >= today_start).count()
+        return {
+            "created": self.db.query(Ticket).filter(Ticket.created_at >= today_start).count(),
+            "resolved": self.db.query(Ticket).filter(Ticket.resolved_at >= today_start).count(),
+        }
 
-        # Média de tempo para resolução (em horas)
-        # Filtra tickets resolvidos, calcula diferença entre resolved_at e created_at
-        avg_res_time = (
+    def _average_resolution_hours(self) -> float:
+        """Return average resolved duration in hours for executive dashboard cards."""
+        avg_resolution_days = (
             self.db.query(func.avg(func.julianday(Ticket.resolved_at) - func.julianday(Ticket.created_at)))
             .filter(Ticket.resolved_at.isnot(None))
             .scalar()
         )
-        avg_res_hours = round(avg_res_time * 24, 2) if avg_res_time else 0.0
+        return round(avg_resolution_days * 24, 2) if avg_resolution_days else 0.0
 
+    def get_stats(self) -> dict:
+        """Get ticket statistics for dashboard."""
         return {
-            "total": total,
-            "open": open_count,
-            "by_status": by_status,
-            "by_priority": by_priority,
-            "by_category": by_category,
-            "by_origin": by_origin,
-            "by_sla_status": by_sla_status,
-            "avg_resolution_hours": avg_res_hours,
-            "today": {
-                "created": today_created,
-                "resolved": today_resolved,
-            },
+            "total": self.db.query(Ticket).count(),
+            "open": self.db.query(Ticket).filter(Ticket.status == "aberto").count(),
+            "by_status": self._count_by(Ticket.status),
+            "by_priority": self._count_by(Ticket.priority),
+            "by_category": self._count_by(Ticket.category),
+            "by_origin": self._count_by(Ticket.origin),
+            "by_sla_status": self._count_by_sla_status(),
+            "avg_resolution_hours": self._average_resolution_hours(),
+            "today": self._today_activity(),
         }
