@@ -3,9 +3,11 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import Column, Integer, String, Text, DateTime, Index
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from database import Base
+from audit_models import TicketAuditEvent
 
 
 class Ticket(Base):
