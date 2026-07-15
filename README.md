@@ -21,6 +21,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Login demo revisado com armazenamento centralizado (`SESSION_KEYS`/`authStorage`) para facilitar manutenção futura
 - Registro do técnico logado ao assumir ou atualizar chamados
 - Comentários internos de técnicos anexados ao histórico do chamado
+- Histórico de alterações/auditoria por chamado via endpoint `/tickets/{id}/audit`
 - Busca por título, descrição, solicitante e e-mail
 - Filtros por status, categoria, prioridade e técnico responsável no dashboard
 - Atribuição de chamados para técnico responsável pela interface
@@ -60,7 +61,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 5. Dashboard de métricas
 6. Filtros por status/prioridade
 7. Comentários nos chamados
-8. Histórico de alterações
+8. Histórico de alterações ✅ auditoria por chamado disponível na API e na SPA
 9. Dockerfile e docker-compose ✅ demo local containerizado na porta 8001
 10. CI com GitHub Actions
 
@@ -175,7 +176,7 @@ Resultado esperado em `/health`:
 {
   "status": "healthy",
   "service": "ivan-helpdesk",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "database": "connected"
 }
 ```
