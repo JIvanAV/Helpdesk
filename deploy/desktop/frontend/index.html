@@ -473,7 +473,7 @@
           this.knowledgeBase = data.categories || {};
         },
 
-        async loadTickets() {
+        buildTicketQuery() {
           const params = new URLSearchParams({ page_size: 50, sort: this.sortOrder });
           if (this.statusFilter) params.set('status', this.statusFilter);
           if (this.categoryFilter) params.set('category', this.categoryFilter);
@@ -481,16 +481,25 @@
           if (this.assigneeFilter.trim().length >= 2) params.set('assigned_to', this.assigneeFilter.trim());
           if (this.originFilter) params.set('origin', this.originFilter);
           if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
+          return params;
+        },
+
+        editableTicket(ticket) {
+          return {
+            ...ticket,
+            resolution_note: '',
+            internal_comment_note: ''
+          };
+        },
+
+        async loadTickets() {
+          const params = this.buildTicketQuery();
 
           const res = await fetch('/tickets?' + params.toString());
           const data = await res.json();
 
           // Campos temporários não sobrescrevem o histórico já salvo.
-          this.tickets = (data.tickets || []).map(ticket => ({
-            ...ticket,
-            resolution_note: '',
-            internal_comment_note: ''
-          }));
+          this.tickets = (data.tickets || []).map(ticket => this.editableTicket(ticket));
         },
 
         async loadStats() {
