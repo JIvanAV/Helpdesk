@@ -20,29 +20,25 @@ class TicketService:
     def __init__(self, db: Session):
         self.db = db
 
+    def _normalize_choice(self, field_name: str, value: str, valid_values: set[str]) -> str:
+        """Normalize and validate one controlled-vocabulary field."""
+        normalized = value.lower().strip().replace("e-mail", "email")
+        if normalized not in valid_values:
+            allowed = ", ".join(sorted(valid_values))
+            raise ValueError(f"{field_name} inválida: {value}. Válidas: {allowed}")
+        return normalized
+
     def _validate_category(self, category: str) -> str:
-        cat = category.lower().strip()
-        if cat not in self.VALID_CATEGORIES:
-            raise ValueError(f"Categoria inválida: {category}. Válidas: {', '.join(self.VALID_CATEGORIES)}")
-        return cat
+        return self._normalize_choice("Categoria", category, self.VALID_CATEGORIES)
 
     def _validate_priority(self, priority: str) -> str:
-        pri = priority.lower().strip()
-        if pri not in self.VALID_PRIORITIES:
-            raise ValueError(f"Prioridade inválida: {priority}. Válidas: {', '.join(self.VALID_PRIORITIES)}")
-        return pri
+        return self._normalize_choice("Prioridade", priority, self.VALID_PRIORITIES)
 
     def _validate_status(self, status: str) -> str:
-        st = status.lower().strip()
-        if st not in self.VALID_STATUSES:
-            raise ValueError(f"Status inválido: {status}. Válidos: {', '.join(self.VALID_STATUSES)}")
-        return st
+        return self._normalize_choice("Status", status, self.VALID_STATUSES)
 
     def _validate_origin(self, origin: str) -> str:
-        normalized = origin.lower().strip().replace("e-mail", "email")
-        if normalized not in self.VALID_ORIGINS:
-            raise ValueError(f"Origem inválida: {origin}. Válidas: {', '.join(self.VALID_ORIGINS)}")
-        return normalized
+        return self._normalize_choice("Origem", origin, self.VALID_ORIGINS)
 
     def create_ticket(self, ticket_data: TicketCreate) -> Ticket:
         """Create a new ticket."""
