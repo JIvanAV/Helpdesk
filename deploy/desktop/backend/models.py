@@ -11,6 +11,8 @@ from database import Base
 class Ticket(Base):
     """Ticket ORM model."""
 
+    CLOSED_STATUSES = {"resolvido", "fechado"}
+
     __tablename__ = "tickets"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -47,7 +49,7 @@ class Ticket(Base):
     @property
     def sla_status(self) -> str:
         """Classify open ticket SLA from its age for the API/frontend."""
-        if self.status in {"resolvido", "fechado"}:
+        if self.status in self.CLOSED_STATUSES:
             return "finalizado"
 
         created_at = self.created_at
@@ -61,42 +63,50 @@ class Ticket(Base):
             return "atencao"
         return "no_prazo"
 
+    def _timeline_event(self, label: str, description: str, occurred_at: Optional[datetime]) -> dict[str, str]:
+        """Create one frontend-friendly timeline event."""
+        return {
+            "label": label,
+            "description": description,
+            "occurred_at": occurred_at.isoformat() if occurred_at else "",
+        }
+
     @property
     def timeline(self) -> list[dict[str, str]]:
         """Build a simple audit-style timeline from the ticket's current fields."""
         events = [
-            {
-                "label": "Chamado criado",
-                "description": f"Solicitante: {self.requester_name}",
-                "occurred_at": self.created_at.isoformat() if self.created_at else "",
-            }
+            self._timeline_event(
+                "Chamado criado",
+                f"Solicitante: {self.requester_name}",
+                self.created_at,
+            )
         ]
 
         if self.assigned_to:
             events.append(
-                {
-                    "label": "Técnico atribuído",
-                    "description": f"Responsável: {self.assigned_to}",
-                    "occurred_at": self.updated_at.isoformat() if self.updated_at else "",
-                }
+                self._timeline_event(
+                    "Técnico atribuído",
+                    f"Responsável: {self.assigned_to}",
+                    self.updated_at,
+                )
             )
 
         if self.updated_at and self.created_at and self.updated_at != self.created_at:
             events.append(
-                {
-                    "label": "Chamado atualizado",
-                    "description": f"Status atual: {self.status}",
-                    "occurred_at": self.updated_at.isoformat(),
-                }
+                self._timeline_event(
+                    "Chamado atualizado",
+                    f"Status atual: {self.status}",
+                    self.updated_at,
+                )
             )
 
         if self.resolved_at:
             events.append(
-                {
-                    "label": "Chamado resolvido",
-                    "description": "Atendimento finalizado com resolução registrada.",
-                    "occurred_at": self.resolved_at.isoformat(),
-                }
+                self._timeline_event(
+                    "Chamado resolvido",
+                    "Atendimento finalizado com resolução registrada.",
+                    self.resolved_at,
+                )
             )
 
         return events
