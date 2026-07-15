@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db, init_db
 from schemas import (
+    API_VERSION,
     TicketCreate,
     TicketUpdate,
     TicketResponse,
@@ -37,7 +38,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Ivan Helpdesk API",
-    version="0.3.7",
+    version=API_VERSION,
     description="Sistema de helpdesk para portfólio — REST API + frontend local",
     lifespan=lifespan,
     docs_url="/docs",

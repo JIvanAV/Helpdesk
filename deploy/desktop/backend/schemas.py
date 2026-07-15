@@ -5,6 +5,9 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
+API_VERSION = "0.3.7"
+
+
 class TicketBase(BaseModel):
     """Base ticket fields."""
     title: str = Field(..., min_length=3, max_length=200, description="Ticket title")
@@ -80,5 +83,5 @@ class HealthResponse(BaseModel):
     """Health check response."""
     status: str = "healthy"
     service: str = "ivan-helpdesk"
-    version: str = "0.3.7"
+    version: str = API_VERSION
     database: str = "connected"
