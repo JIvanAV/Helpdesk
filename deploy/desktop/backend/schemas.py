@@ -71,6 +71,18 @@ class TicketResponse(TicketBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TicketAuditEventResponse(BaseModel):
+    """Audit event returned for one ticket."""
+    id: int
+    ticket_id: int
+    event_type: str
+    description: str
+    technician: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class TicketListResponse(BaseModel):
     """Paginated ticket list response."""
     tickets: list[TicketResponse]

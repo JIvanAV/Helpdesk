@@ -22,9 +22,11 @@ from schemas import (
     TicketUpdate,
     TicketResponse,
     TicketListResponse,
+    TicketAuditEventResponse,
     TicketCommentCreate,
     HealthResponse,
 )
+
 from service import TicketService
 from knowledge_base import get_checklist, list_checklists
 
@@ -274,6 +276,18 @@ def add_ticket_internal_comment(
     if not ticket:
         raise HTTPException(status_code=404, detail="Chamado não encontrado")
     return ticket
+
+
+@app.get("/tickets/{ticket_id}/audit", response_model=list[TicketAuditEventResponse], tags=["Tickets"])
+def get_ticket_audit_history(
+    ticket_id: int,
+    service: TicketService = Depends(get_ticket_service),
+):
+    """Listar histórico de auditoria do chamado."""
+    events = service.get_audit_events(ticket_id)
+    if events is None:
+        raise HTTPException(status_code=404, detail="Chamado não encontrado")
+    return events
 
 
 @app.delete("/tickets/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Tickets"])

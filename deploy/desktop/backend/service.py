@@ -308,6 +308,17 @@ class TicketService:
         self.db.refresh(ticket)
         return ticket
 
+    def get_audit_events(self, ticket_id: int) -> Optional[list[TicketAuditEvent]]:
+        """Return audit events for a ticket in chronological order."""
+        if not self.get_ticket(ticket_id):
+            return None
+        return (
+            self.db.query(TicketAuditEvent)
+            .filter(TicketAuditEvent.ticket_id == ticket_id)
+            .order_by(TicketAuditEvent.created_at.asc(), TicketAuditEvent.id.asc())
+            .all()
+        )
+
     def delete_ticket(self, ticket_id: int) -> bool:
         """Delete a ticket (soft delete not implemented, hard delete)."""
         ticket = self.get_ticket(ticket_id)
