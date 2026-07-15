@@ -48,6 +48,42 @@ app = FastAPI(
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
 
+CSV_COLUMNS = [
+    "id",
+    "titulo",
+    "categoria",
+    "prioridade",
+    "status",
+    "origem",
+    "solicitante",
+    "email",
+    "tecnico",
+    "feedback",
+    "criado_em",
+    "atualizado_em",
+    "resolvido_em",
+]
+
+
+def _ticket_csv_row(ticket) -> list[str | int]:
+    """Translate one ticket object to the public CSV export format."""
+    return [
+        ticket.id,
+        ticket.title,
+        ticket.category,
+        ticket.priority,
+        ticket.status,
+        ticket.origin,
+        ticket.requester_name,
+        ticket.requester_email,
+        ticket.assigned_to or "",
+        ticket.feedback or "",
+        ticket.created_at.isoformat() if ticket.created_at else "",
+        ticket.updated_at.isoformat() if ticket.updated_at else "",
+        ticket.resolved_at.isoformat() if ticket.resolved_at else "",
+    ]
+
+
 if FRONTEND_DIR.exists():
     app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
 
@@ -186,38 +222,10 @@ def export_tickets_csv(service: TicketService = Depends(get_ticket_service)):
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=";")
-    writer.writerow([
-        "id",
-        "titulo",
-        "categoria",
-        "prioridade",
-        "status",
-        "origem",
-        "solicitante",
-        "email",
-        "tecnico",
-        "feedback",
-        "criado_em",
-        "atualizado_em",
-        "resolvido_em",
-    ])
+    writer.writerow(CSV_COLUMNS)
 
     for ticket in tickets:
-        writer.writerow([
-            ticket.id,
-            ticket.title,
-            ticket.category,
-            ticket.priority,
-            ticket.status,
-            ticket.origin,
-            ticket.requester_name,
-            ticket.requester_email,
-            ticket.assigned_to or "",
-            ticket.feedback or "",
-            ticket.created_at.isoformat() if ticket.created_at else "",
-            ticket.updated_at.isoformat() if ticket.updated_at else "",
-            ticket.resolved_at.isoformat() if ticket.resolved_at else "",
-        ])
+        writer.writerow(_ticket_csv_row(ticket))
 
     output.seek(0)
     return StreamingResponse(
