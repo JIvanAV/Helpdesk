@@ -38,7 +38,8 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Tratamento padronizado para erros de validação e falhas internas
 - CORS restrito aos endereços locais usados no demo
 - Dockerfile e `docker-compose.yml` iniciais para executar o demo em container
-- Revisão leve de qualidade para deixar API, service layer e SPA mais legíveis
+- Revisão leve de qualidade para deixar API, service layer, modelos ORM e SPA mais legíveis
+- Refatoração incremental em commits pequenos para simular manutenção real de um projeto em produção
 
 ## MVP inicial
 
