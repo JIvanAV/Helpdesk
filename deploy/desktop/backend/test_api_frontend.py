@@ -102,6 +102,11 @@ def test_home_serves_spa_frontend():
     assert "Comentário interno para a equipe técnica" in response.text
     assert "addInternalComment(ticket)" in response.text
     assert "/comments" in response.text
+    assert "Histórico de alterações do chamado" in response.text
+    assert "ticket.audit_events?.length" in response.text
+    assert "loadTicketAudit" in response.text
+    assert "/audit" in response.text
+    assert "auditTypeLabel" in response.text
 
 
 def test_knowledge_base_endpoint_returns_category_checklists():
@@ -285,6 +290,64 @@ def test_ticket_internal_comments_are_appended_without_overwriting():
     assert "Usuário disponível apenas pela manhã." in payload["internal_comments"]
     assert "[comentário interno] Ivan Suporte" in payload["internal_comments"]
     assert "---" in payload["internal_comments"]
+
+
+def test_ticket_audit_history_records_update_flow():
+    run_marker = uuid4().hex[:8]
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Auditoria chamado {run_marker}",
+            "description": "Chamado usado para validar histórico de alterações auditável.",
+            "category": "access",
+            "priority": "media",
+            "requester_name": "QA Auditoria",
+            "requester_email": f"qa.audit.{run_marker}@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+    ticket_id = create_response.json()["id"]
+
+    empty_history = client.get(f"/tickets/{ticket_id}/audit")
+    assert empty_history.status_code == 200
+    assert empty_history.json() == []
+
+    update_response = client.patch(
+        f"/tickets/{ticket_id}",
+        json={
+            "status": "em_andamento",
+            "priority": "alta",
+            "assigned_to": "Ivan Suporte",
+            "resolution": "Primeira investigação registrada para auditoria.",
+        },
+    )
+    comment_response = client.post(
+        f"/tickets/{ticket_id}/comments",
+        json={"technician": "Ivan Suporte", "comment": "Evidência coletada antes do fechamento."},
+    )
+
+    assert update_response.status_code == 200
+    assert comment_response.status_code == 200
+
+    history_response = client.get(f"/tickets/{ticket_id}/audit")
+    assert history_response.status_code == 200
+    events = history_response.json()
+    descriptions = [event["description"] for event in events]
+    event_types = [event["event_type"] for event in events]
+
+    assert len(events) >= 4
+    assert "field_change" in event_types
+    assert "resolution" in event_types
+    assert "internal_comment" in event_types
+    assert any("Status alterado de 'aberto' para 'em_andamento'" in item for item in descriptions)
+    assert any("Prioridade alterado de 'media' para 'alta'" in item for item in descriptions)
+    assert any("Responsável alterado de 'não informado' para 'Ivan Suporte'" in item for item in descriptions)
+    assert all(event["ticket_id"] == ticket_id for event in events)
+    assert all("created_at" in event for event in events)
+
+    missing_history = client.get("/tickets/999999999/audit")
+    assert missing_history.status_code == 404
 
 
 def test_ticket_resolution_updates_are_appended_as_history():
