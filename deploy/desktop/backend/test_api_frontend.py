@@ -25,7 +25,7 @@ def test_health_reports_current_version():
     payload = response.json()
     assert payload["status"] == "healthy"
     assert payload["service"] == "ivan-helpdesk"
-    assert payload["version"] == "0.3.8"
+    assert payload["version"] == "0.3.9"
 
 
 def test_home_serves_spa_frontend():
@@ -664,3 +664,47 @@ def test_ticket_origin_can_be_created_updated_filtered_and_reported():
     stats_response = client.get("/stats")
     assert stats_response.status_code == 200
     assert stats_response.json()["by_origin"]["telefone"] >= 1
+
+
+def test_ticket_impact_can_be_created_updated_filtered_and_reported():
+    run_marker = uuid4().hex[:8]
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Impacto operacional {run_marker}",
+            "description": "Chamado usado para validar impacto operacional separado da prioridade.",
+            "category": "network",
+            "priority": "alta",
+            "impact": "alto",
+            "requester_name": "QA Impacto",
+            "requester_email": f"qa.impact.{run_marker}@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+    ticket = create_response.json()
+    assert ticket["impact"] == "alto"
+
+    update_response = client.patch(f"/tickets/{ticket['id']}", json={"impact": "parada_total"})
+    assert update_response.status_code == 200
+    assert update_response.json()["impact"] == "parada_total"
+
+    filter_response = client.get(f"/tickets?impact=parada_total&search={run_marker}&page_size=20")
+    assert filter_response.status_code == 200
+    payload = filter_response.json()
+    assert payload["total"] == 1
+    assert payload["tickets"][0]["id"] == ticket["id"]
+
+    stats_response = client.get("/stats")
+    assert stats_response.status_code == 200
+    assert stats_response.json()["by_impact"]["parada_total"] >= 1
+
+    audit_response = client.get(f"/tickets/{ticket['id']}/audit")
+    assert audit_response.status_code == 200
+    descriptions = [event["description"] for event in audit_response.json()]
+    assert any("Impacto operacional alterado de 'alto' para 'parada_total'" in item for item in descriptions)
+
+    frontend_response = client.get("/")
+    assert frontend_response.status_code == 200
+    assert "Impacto operacional" in frontend_response.text
+    assert "Todos os impactos" in frontend_response.text

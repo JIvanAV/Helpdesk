@@ -24,6 +24,8 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Histórico de alterações/auditoria por chamado via endpoint `/tickets/{id}/audit`
 - Busca por título, descrição, solicitante e e-mail
 - Filtros por status, categoria, prioridade e técnico responsável no dashboard
+- Campo de impacto operacional (`baixo`, `medio`, `alto`, `parada_total`) separado da prioridade técnica
+- Filtro e estatísticas por impacto operacional para apoiar triagem e relatórios futuros
 - Atribuição de chamados para técnico responsável pela interface
 - Base de conhecimento por categoria com checklists de suporte N1/N2
 - Endpoint `/knowledge-base` para consultar dicas por categoria do chamado
@@ -176,7 +178,7 @@ Resultado esperado em `/health`:
 {
   "status": "healthy",
   "service": "ivan-helpdesk",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "database": "connected"
 }
 ```
