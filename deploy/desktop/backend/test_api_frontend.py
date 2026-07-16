@@ -147,7 +147,7 @@ def test_ticket_export_csv_download_contains_created_ticket():
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
     assert "ivan-helpdesk-chamados.csv" in response.headers["content-disposition"]
-    assert "id;titulo;categoria;prioridade;status;origem" in response.text
+    assert "id;titulo;categoria;prioridade;impacto;status;origem" in response.text
     assert f"Exportacao CSV {run_marker}" in response.text
     assert f"qa.export.{run_marker}@example.com" in response.text
 
