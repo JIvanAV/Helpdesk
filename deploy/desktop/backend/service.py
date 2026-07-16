@@ -14,6 +14,7 @@ class TicketService:
 
     VALID_CATEGORIES = {"hardware", "software", "network", "access", "other"}
     VALID_PRIORITIES = {"baixa", "media", "alta", "critica"}
+    VALID_IMPACTS = {"baixo", "medio", "alto", "parada_total"}
     VALID_STATUSES = {"aberto", "em_andamento", "resolvido", "fechado"}
     VALID_ORIGINS = {"email", "telefone", "whatsapp", "portal", "presencial"}
 
@@ -34,6 +35,9 @@ class TicketService:
     def _validate_priority(self, priority: str) -> str:
         return self._normalize_choice("Prioridade", priority, self.VALID_PRIORITIES)
 
+    def _validate_impact(self, impact: str) -> str:
+        return self._normalize_choice("Impacto", impact, self.VALID_IMPACTS)
+
     def _validate_status(self, status: str) -> str:
         return self._normalize_choice("Status", status, self.VALID_STATUSES)
 
@@ -47,6 +51,7 @@ class TicketService:
             description=ticket_data.description.strip(),
             category=self._validate_category(ticket_data.category),
             priority=self._validate_priority(ticket_data.priority),
+            impact=self._validate_impact(ticket_data.impact),
             origin=self._validate_origin(ticket_data.origin),
             status="aberto",
             requester_name=ticket_data.requester_name.strip(),
@@ -108,6 +113,7 @@ class TicketService:
         labels = {
             "status": "Status",
             "priority": "Prioridade",
+            "impact": "Impacto operacional",
             "category": "Categoria",
             "origin": "Origem",
             "assigned_to": "Responsável",
@@ -230,6 +236,7 @@ class TicketService:
         previous = {
             "status": ticket.status,
             "priority": ticket.priority,
+            "impact": ticket.impact,
             "category": ticket.category,
             "origin": ticket.origin,
             "assigned_to": ticket.assigned_to,
@@ -244,6 +251,8 @@ class TicketService:
             update_data["category"] = self._validate_category(update_data["category"])
         if "priority" in update_data and update_data["priority"]:
             update_data["priority"] = self._validate_priority(update_data["priority"])
+        if "impact" in update_data and update_data["impact"]:
+            update_data["impact"] = self._validate_impact(update_data["impact"])
         if "origin" in update_data and update_data["origin"]:
             update_data["origin"] = self._validate_origin(update_data["origin"])
         if "status" in update_data and update_data["status"]:

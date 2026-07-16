@@ -45,5 +45,7 @@ def init_db() -> None:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN feedback INTEGER"))
         if "origin" not in columns:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN origin VARCHAR(50) NOT NULL DEFAULT 'portal'"))
+        if "impact" not in columns:
+            conn.execute(text("ALTER TABLE tickets ADD COLUMN impact VARCHAR(20) NOT NULL DEFAULT 'baixo'"))
         if "internal_comments" not in columns:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN internal_comments TEXT"))
