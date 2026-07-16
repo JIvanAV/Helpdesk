@@ -22,6 +22,7 @@ class Ticket(Base):
     description = Column(Text, nullable=False)
     category = Column(String(50), nullable=False, index=True)  # hardware, software, network, access, other
     priority = Column(String(20), nullable=False, default="media", index=True)  # baixa, media, alta, critica
+    impact = Column(String(20), nullable=False, default="baixo", index=True)  # baixo, medio, alto, parada_total
     status = Column(String(20), nullable=False, default="aberto", index=True)  # aberto, em_andamento, resolvido, fechado
 
     # Requester info
