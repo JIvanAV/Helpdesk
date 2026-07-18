@@ -25,7 +25,7 @@ def test_health_reports_current_version():
     payload = response.json()
     assert payload["status"] == "healthy"
     assert payload["service"] == "ivan-helpdesk"
-    assert payload["version"] == "0.3.9"
+    assert payload["version"] == "0.3.10"
 
 
 def test_home_serves_spa_frontend():
@@ -107,6 +107,7 @@ def test_home_serves_spa_frontend():
     assert "loadTicketAudit" in response.text
     assert "/audit" in response.text
     assert "auditTypeLabel" in response.text
+    assert "auditChangeSummary" in response.text
 
 
 def test_knowledge_base_endpoint_returns_category_checklists():
@@ -345,6 +346,20 @@ def test_ticket_audit_history_records_update_flow():
     assert any("Responsável alterado de 'não informado' para 'Ivan Suporte'" in item for item in descriptions)
     assert all(event["ticket_id"] == ticket_id for event in events)
     assert all("created_at" in event for event in events)
+
+    status_event = next(event for event in events if event["field_name"] == "status")
+    assert status_event["previous_value"] == "aberto"
+    assert status_event["new_value"] == "em_andamento"
+    assert status_event["actor_role"] == "tecnico"
+
+    assignment_events = client.get(f"/tickets/{ticket_id}/audit?event_type=assignment&technician=ivan%20suporte")
+    assert assignment_events.status_code == 200
+    assert len(assignment_events.json()) == 1
+    assert assignment_events.json()[0]["field_name"] == "assigned_to"
+
+    limited_history = client.get(f"/tickets/{ticket_id}/audit?limit=2")
+    assert limited_history.status_code == 200
+    assert len(limited_history.json()) == 2
 
     missing_history = client.get("/tickets/999999999/audit")
     assert missing_history.status_code == 404

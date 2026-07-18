@@ -21,7 +21,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Login demo revisado com armazenamento centralizado (`SESSION_KEYS`/`authStorage`) para facilitar manutenção futura
 - Registro do técnico logado ao assumir ou atualizar chamados
 - Comentários internos de técnicos anexados ao histórico do chamado
-- Histórico de alterações/auditoria por chamado via endpoint `/tickets/{id}/audit`
+- Histórico de alterações/auditoria por chamado via endpoint `/tickets/{id}/audit` com campo alterado, valor anterior, novo valor e filtros por tipo/técnico
 - Busca por título, descrição, solicitante e e-mail
 - Filtros por status, categoria, prioridade e técnico responsável no dashboard
 - Campo de impacto operacional (`baixo`, `medio`, `alto`, `parada_total`) separado da prioridade técnica
@@ -178,7 +178,7 @@ Resultado esperado em `/health`:
 {
   "status": "healthy",
   "service": "ivan-helpdesk",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "database": "connected"
 }
 ```
