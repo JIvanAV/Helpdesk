@@ -366,16 +366,24 @@ class TicketService:
         self.db.refresh(ticket)
         return ticket
 
-    def get_audit_events(self, ticket_id: int) -> Optional[list[TicketAuditEvent]]:
+    def get_audit_events(
+        self,
+        ticket_id: int,
+        event_type: Optional[str] = None,
+        technician: Optional[str] = None,
+        limit: int = 50,
+    ) -> Optional[list[TicketAuditEvent]]:
         """Return audit events for a ticket in chronological order."""
         if not self.get_ticket(ticket_id):
             return None
-        return (
-            self.db.query(TicketAuditEvent)
-            .filter(TicketAuditEvent.ticket_id == ticket_id)
-            .order_by(TicketAuditEvent.created_at.asc(), TicketAuditEvent.id.asc())
-            .all()
-        )
+
+        query = self.db.query(TicketAuditEvent).filter(TicketAuditEvent.ticket_id == ticket_id)
+        if event_type:
+            query = query.filter(TicketAuditEvent.event_type == event_type.strip())
+        if technician:
+            query = query.filter(func.lower(TicketAuditEvent.technician) == technician.strip().lower())
+
+        return query.order_by(TicketAuditEvent.created_at.asc(), TicketAuditEvent.id.asc()).limit(limit).all()
 
     def delete_ticket(self, ticket_id: int) -> bool:
         """Delete a ticket (soft delete not implemented, hard delete)."""

@@ -285,10 +285,13 @@ def add_ticket_internal_comment(
 @app.get("/tickets/{ticket_id}/audit", response_model=list[TicketAuditEventResponse], tags=["Tickets"])
 def get_ticket_audit_history(
     ticket_id: int,
+    event_type: str | None = Query(None, description="Filtrar por tipo de evento"),
+    technician: str | None = Query(None, description="Filtrar por técnico responsável"),
+    limit: int = Query(50, ge=1, le=200, description="Quantidade máxima de eventos"),
     service: TicketService = Depends(get_ticket_service),
 ):
     """Listar histórico de auditoria do chamado."""
-    events = service.get_audit_events(ticket_id)
+    events = service.get_audit_events(ticket_id, event_type=event_type, technician=technician, limit=limit)
     if events is None:
         raise HTTPException(status_code=404, detail="Chamado não encontrado")
     return events
