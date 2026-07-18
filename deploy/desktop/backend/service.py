@@ -97,18 +97,26 @@ class TicketService:
         event_type: str,
         description: str,
         technician: Optional[str] = None,
+        field_name: Optional[str] = None,
+        previous_value: Optional[str] = None,
+        new_value: Optional[str] = None,
+        actor_role: str = "tecnico",
     ) -> None:
         """Record one append-only ticket audit event."""
         self.db.add(
             TicketAuditEvent(
                 ticket_id=ticket.id,
                 event_type=event_type,
+                field_name=field_name,
+                previous_value=str(previous_value) if previous_value is not None else None,
+                new_value=str(new_value) if new_value is not None else None,
                 description=description,
                 technician=self._technician_name(technician) if technician else None,
+                actor_role=actor_role,
             )
         )
 
-    def _describe_update_events(self, ticket: Ticket, update_data: dict, previous: dict) -> list[tuple[str, str]]:
+    def _describe_update_events(self, ticket: Ticket, update_data: dict, previous: dict) -> list[dict[str, Optional[str]]]:
         """Build readable audit descriptions for changed ticket fields."""
         labels = {
             "status": "Status",
@@ -124,11 +132,30 @@ class TicketService:
             if field in update_data and update_data[field] != previous.get(field):
                 before = previous.get(field) or "não informado"
                 after = update_data[field] or "não informado"
-                events.append(("field_change", f"{label} alterado de '{before}' para '{after}'."))
+                event_type = "assignment" if field == "assigned_to" else "field_change"
+                events.append({
+                    "event_type": event_type,
+                    "field_name": field,
+                    "previous_value": before,
+                    "new_value": after,
+                    "description": f"{label} alterado de '{before}' para '{after}'.",
+                })
         if "resolution" in update_data and update_data["resolution"] != previous.get("resolution"):
-            events.append(("resolution", "Histórico de resolução recebeu uma nova anotação técnica."))
+            events.append({
+                "event_type": "resolution",
+                "field_name": "resolution",
+                "previous_value": "preenchida" if previous.get("resolution") else "não informado",
+                "new_value": "nova anotação registrada",
+                "description": "Histórico de resolução recebeu uma nova anotação técnica.",
+            })
         if "internal_comment" in update_data:
-            events.append(("internal_comment", "Comentário interno adicionado ao chamado."))
+            events.append({
+                "event_type": "internal_comment",
+                "field_name": "internal_comments",
+                "previous_value": "comentários existentes" if ticket.internal_comments else "não informado",
+                "new_value": "novo comentário interno",
+                "description": "Comentário interno adicionado ao chamado.",
+            })
         return events
 
     def add_internal_comment(self, ticket_id: int, comment_data: TicketCommentCreate) -> Optional[Ticket]:
@@ -144,7 +171,11 @@ class TicketService:
                 "internal_comment",
                 "Comentário interno adicionado ao chamado.",
                 author,
+                field_name="internal_comments",
+                previous_value="comentários existentes" if ticket.internal_comments and "---" in ticket.internal_comments else "não informado",
+                new_value="novo comentário interno",
             )
+
         ticket.updated_at = datetime.utcnow()
         self.db.commit()
         self.db.refresh(ticket)
@@ -245,6 +276,7 @@ class TicketService:
             "assigned_to": ticket.assigned_to,
             "feedback": ticket.feedback,
             "resolution": ticket.resolution,
+            "internal_comments": ticket.internal_comments,
         }
         audit_author = update_data.get("assigned_to") or ticket.assigned_to
         internal_comment_author = None
@@ -306,15 +338,29 @@ class TicketService:
 
         audit_events = self._describe_update_events(ticket, update_data, previous)
         if internal_comment_author:
-            audit_events.append(("internal_comment", "Comentário interno adicionado ao chamado."))
+            audit_events.append({
+                "event_type": "internal_comment",
+                "field_name": "internal_comments",
+                "previous_value": "comentários existentes" if previous.get("internal_comments") else "não informado",
+                "new_value": "novo comentário interno",
+                "description": "Comentário interno adicionado ao chamado.",
+            })
 
         # Aplica todas as mudanças validadas
         for field, value in update_data.items():
             setattr(ticket, field, value)
 
         ticket.updated_at = datetime.utcnow()
-        for event_type, description in audit_events:
-            self._add_audit_event(ticket, event_type, description, audit_author)
+        for event in audit_events:
+            self._add_audit_event(
+                ticket,
+                event["event_type"],
+                event["description"],
+                audit_author,
+                field_name=event.get("field_name"),
+                previous_value=event.get("previous_value"),
+                new_value=event.get("new_value"),
+            )
 
         self.db.commit()
         self.db.refresh(ticket)
