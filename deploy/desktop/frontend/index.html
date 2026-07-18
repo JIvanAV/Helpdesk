@@ -308,6 +308,7 @@
                           <span class="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-sky-300"></span>
                           <p class="font-semibold text-sky-100" x-text="auditTypeLabel(event.event_type)"></p>
                           <p class="text-sky-100/80" x-text="event.description"></p>
+                          <p class="mt-1 rounded-lg bg-sky-950/50 px-2 py-1 text-[11px] text-sky-100/70" x-show="auditChangeSummary(event)" x-text="auditChangeSummary(event)"></p>
                           <p class="text-[11px] text-sky-100/60" x-text="(event.technician || 'Sistema') + ' • ' + formatDateTime(event.created_at)"></p>
                         </li>
                       </template>
@@ -654,6 +655,14 @@
             assignment: 'Responsável atualizado'
           };
           return labels[eventType] || 'Evento de auditoria';
+        },
+
+        auditChangeSummary(event) {
+          if (!event?.field_name) return '';
+          const field = event.field_name.replaceAll('_', ' ');
+          const before = event.previous_value || 'não informado';
+          const after = event.new_value || 'não informado';
+          return `${field}: ${before} → ${after}`;
         },
 
         formatDateTime(value) {
