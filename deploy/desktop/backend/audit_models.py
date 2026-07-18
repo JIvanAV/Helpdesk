@@ -9,9 +9,13 @@ class TicketAuditEvent(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     ticket_id = Column(Integer, ForeignKey("tickets.id"), nullable=False, index=True)
-    event_type = Column(String(50), nullable=False)  # status_change, assignment, resolution, note_added
+    event_type = Column(String(50), nullable=False)  # field_change, resolution, internal_comment
+    field_name = Column(String(80), nullable=True)
+    previous_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
     description = Column(Text, nullable=False)
     technician = Column(String(100), nullable=True)  # Name of tech who made the change
+    actor_role = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     ticket = relationship("Ticket", backref="audit_events")

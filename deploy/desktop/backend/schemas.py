@@ -78,8 +78,12 @@ class TicketAuditEventResponse(BaseModel):
     id: int
     ticket_id: int
     event_type: str
+    field_name: Optional[str] = None
+    previous_value: Optional[str] = None
+    new_value: Optional[str] = None
     description: str
     technician: Optional[str] = None
+    actor_role: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

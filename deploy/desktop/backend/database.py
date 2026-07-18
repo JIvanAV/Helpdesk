@@ -49,3 +49,13 @@ def init_db() -> None:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN impact VARCHAR(20) NOT NULL DEFAULT 'baixo'"))
         if "internal_comments" not in columns:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN internal_comments TEXT"))
+
+        audit_columns = [row[1] for row in conn.execute(text("PRAGMA table_info(ticket_audit_events)"))]
+        if "field_name" not in audit_columns:
+            conn.execute(text("ALTER TABLE ticket_audit_events ADD COLUMN field_name VARCHAR(80)"))
+        if "previous_value" not in audit_columns:
+            conn.execute(text("ALTER TABLE ticket_audit_events ADD COLUMN previous_value TEXT"))
+        if "new_value" not in audit_columns:
+            conn.execute(text("ALTER TABLE ticket_audit_events ADD COLUMN new_value TEXT"))
+        if "actor_role" not in audit_columns:
+            conn.execute(text("ALTER TABLE ticket_audit_events ADD COLUMN actor_role VARCHAR(50)"))
