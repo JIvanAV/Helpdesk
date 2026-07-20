@@ -1,6 +1,6 @@
 """Service layer for Ivan Helpdesk business logic."""
 
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_, case
@@ -373,23 +373,62 @@ class TicketService:
         )
         return round(avg_resolution_days * 24, 2) if avg_resolution_days else 0.0
 
+    def _technician_load(self, tickets: list[Ticket]) -> dict[str, int]:
+        """Group active tickets by technician for workload visibility."""
+        load: dict[str, int] = {}
+        for ticket in tickets:
+            if ticket.status in {"resolvido", "fechado"}:
+                continue
+            technician = ticket.assigned_to or "Sem técnico"
+            load[technician] = load.get(technician, 0) + 1
+        return dict(sorted(load.items(), key=lambda item: (-item[1], item[0])))
+
+    def _attention_queue(self, tickets: list[Ticket]) -> list[dict[str, str | int]]:
+        """Return a small queue of tickets that deserve manager attention."""
+        priority_rank = {"critica": 0, "alta": 1, "media": 2, "baixa": 3}
+        open_tickets = [ticket for ticket in tickets if ticket.status not in {"resolvido", "fechado"}]
+        ordered = sorted(
+            open_tickets,
+            key=lambda ticket: (ticket.sla_status != "atrasado", priority_rank.get(ticket.priority, 4), ticket.created_at),
+        )
+        return [
+            {
+                "id": ticket.id,
+                "title": ticket.title,
+                "priority": ticket.priority,
+                "impact": ticket.impact,
+                "status": ticket.status,
+                "sla_status": ticket.sla_status,
+                "assigned_to": ticket.assigned_to or "Sem técnico",
+            }
+            for ticket in ordered[:5]
+        ]
+
     def get_operational_metrics(self) -> dict:
-        """Advanced operational metrics for JSON reporting."""
-        all_tickets = self.db.query(Ticket).all()
-        resolved = [t for t in all_tickets if t.resolved_at]
-        
-        # Calculate SLA performance
-        total_resolved = len(resolved)
-        on_time = len([t for t in resolved if t.sla_status == "no_prazo"])
-        sla_adherence = round((on_time / total_resolved * 100), 2) if total_resolved > 0 else 0.0
+        """Return a manager-friendly JSON report for the helpdesk operation."""
+        tickets = self.db.query(Ticket).order_by(desc(Ticket.created_at)).all()
+        resolved = [ticket for ticket in tickets if ticket.resolved_at]
+        active = [ticket for ticket in tickets if ticket.status not in {"resolvido", "fechado"}]
+        stale_since = datetime.utcnow() - timedelta(hours=24)
+        resolved_on_time = [ticket for ticket in resolved if ticket.sla_status == "finalizado"]
 
         return {
-            "total_tickets": len(all_tickets),
-            "sla_adherence_percent": sla_adherence,
-            "critical_tickets_count": len([t for t in all_tickets if t.priority == "critica" and t.status != "fechado"]),
+            "generated_at": datetime.utcnow().isoformat(),
+            "total_tickets": len(tickets),
+            "active_tickets": len(active),
+            "resolved_tickets": len(resolved),
+            "critical_tickets_count": len([ticket for ticket in active if ticket.priority == "critica"]),
+            "parada_total_count": len([ticket for ticket in active if ticket.impact == "parada_total"]),
+            "unassigned_tickets": len([ticket for ticket in active if not ticket.assigned_to]),
+            "stale_tickets_24h": len([ticket for ticket in active if ticket.updated_at and ticket.updated_at.replace(tzinfo=None) < stale_since]),
+            "sla_adherence_percent": round((len(resolved_on_time) / len(resolved) * 100), 2) if resolved else 0.0,
             "avg_resolution_hours": self._average_resolution_hours(),
-            "impact_analysis": self._count_by(Ticket.impact),
-            "generated_at": datetime.utcnow().isoformat()
+            "by_status": self._count_by(Ticket.status),
+            "by_priority": self._count_by(Ticket.priority),
+            "by_impact": self._count_by(Ticket.impact),
+            "by_origin": self._count_by(Ticket.origin),
+            "technician_load": self._technician_load(tickets),
+            "attention_queue": self._attention_queue(tickets),
         }
 
     def get_stats(self) -> dict:
