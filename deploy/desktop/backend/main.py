@@ -29,6 +29,7 @@ from schemas import (
 
 from service import TicketService
 from knowledge_base import get_checklist, list_checklists
+from seed_demo import reset_recruiter_demo
 
 
 @asynccontextmanager
@@ -311,6 +312,12 @@ def get_stats(service: TicketService = Depends(get_ticket_service)):
     """Estatísticas para dashboard."""
     return service.get_stats()
 
+
+@app.post("/demo/recruiter/reset", response_model=TicketListResponse, tags=["Demo"])
+def reset_recruiter_demo_data(db: Session = Depends(get_db)):
+    """Preparar uma base pequena e limpa para apresentar o portfólio."""
+    tickets = reset_recruiter_demo(db)
+    return TicketListResponse(tickets=tickets, total=len(tickets), page=1, page_size=len(tickets))
 
 @app.get("/knowledge-base", tags=["Knowledge Base"])
 def list_knowledge_base():
