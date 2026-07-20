@@ -373,7 +373,27 @@ class TicketService:
         )
         return round(avg_resolution_days * 24, 2) if avg_resolution_days else 0.0
 
+    def get_operational_metrics(self) -> dict:
+        """Advanced operational metrics for JSON reporting."""
+        all_tickets = self.db.query(Ticket).all()
+        resolved = [t for t in all_tickets if t.resolved_at]
+        
+        # Calculate SLA performance
+        total_resolved = len(resolved)
+        on_time = len([t for t in resolved if t.sla_status == "no_prazo"])
+        sla_adherence = round((on_time / total_resolved * 100), 2) if total_resolved > 0 else 0.0
+
+        return {
+            "total_tickets": len(all_tickets),
+            "sla_adherence_percent": sla_adherence,
+            "critical_tickets_count": len([t for t in all_tickets if t.priority == "critica" and t.status != "fechado"]),
+            "avg_resolution_hours": self._average_resolution_hours(),
+            "impact_analysis": self._count_by(Ticket.impact),
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
     def get_stats(self) -> dict:
+
         """Get ticket statistics for dashboard."""
         return {
             "total": self.db.query(Ticket).count(),
