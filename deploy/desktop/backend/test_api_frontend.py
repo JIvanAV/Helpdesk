@@ -111,6 +111,10 @@ def test_home_serves_spa_frontend():
     assert "Preparar cenário de apresentação" in response.text
     assert "prepareRecruiterDemo" in response.text
     assert "/demo/recruiter/reset" in response.text
+    assert "Relatório operacional" in response.text
+    assert "/reports/operational" in response.text
+    assert "operationalReportItems" in response.text
+    assert "Fila de atenção" in response.text
 
 
 def test_recruiter_demo_reset_endpoint_prepares_portfolio_scenario():
@@ -135,6 +139,35 @@ def test_recruiter_demo_reset_endpoint_prepares_portfolio_scenario():
     assert stats["total"] == 4
     assert stats["by_impact"]["parada_total"] == 1
     assert stats["by_status"]["resolvido"] == 1
+
+
+def test_operational_report_endpoint_returns_management_metrics():
+    demo_response = client.post("/demo/recruiter/reset")
+    assert demo_response.status_code == 200
+
+    response = client.get("/reports/operational")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total_tickets"] == 4
+    assert payload["active_tickets"] == 3
+    assert payload["resolved_tickets"] == 1
+    assert payload["critical_tickets_count"] == 1
+    assert payload["parada_total_count"] == 1
+    assert payload["unassigned_tickets"] >= 0
+    assert payload["avg_resolution_hours"] >= 0
+    assert "generated_at" in payload
+    assert "by_status" in payload
+    assert "by_priority" in payload
+    assert "by_impact" in payload
+    assert "by_origin" in payload
+    assert "technician_load" in payload
+    assert "José Ivan" in payload["technician_load"]
+
+    attention_queue = payload["attention_queue"]
+    assert 1 <= len(attention_queue) <= 5
+    expected_keys = {"id", "title", "priority", "impact", "status", "sla_status", "assigned_to"}
+    assert expected_keys.issubset(attention_queue[0])
 
 
 def test_knowledge_base_endpoint_returns_category_checklists():

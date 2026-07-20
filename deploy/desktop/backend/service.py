@@ -407,7 +407,7 @@ class TicketService:
     def get_operational_metrics(self) -> dict:
         """Return a manager-friendly JSON report for the helpdesk operation."""
         tickets = self.db.query(Ticket).order_by(desc(Ticket.created_at)).all()
-        resolved = [ticket for ticket in tickets if ticket.resolved_at]
+        resolved = [ticket for ticket in tickets if ticket.status in {"resolvido", "fechado"}]
         active = [ticket for ticket in tickets if ticket.status not in {"resolvido", "fechado"}]
         stale_since = datetime.utcnow() - timedelta(hours=24)
         resolved_on_time = [ticket for ticket in resolved if ticket.sla_status == "finalizado"]
