@@ -31,6 +31,8 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Atribuição de chamados para técnico responsável pela interface
 - Base de conhecimento por categoria com checklists de suporte N1/N2
 - Endpoint `/knowledge-base` para consultar dicas por categoria do chamado
+- Relatório operacional JSON avançado em `/reports/operational` com fila de atenção, carga por técnico e indicadores de SLA
+- Painel visual na SPA para apresentar os principais indicadores do relatório operacional
 - Botão para limpar filtros e voltar rapidamente à listagem principal
 - Ordenação por prioridade para destacar chamados críticos
 - Estatísticas de chamados por status, prioridade e categoria
@@ -141,6 +143,7 @@ Acesse:
 | http://localhost:8001/docs | Swagger UI da API |
 | http://localhost:8001/health | Verificação rápida da API |
 | http://localhost:8001/stats | Métricas do dashboard |
+| http://localhost:8001/reports/operational | Relatório operacional JSON avançado |
 
 ### Modo recrutador
 
@@ -160,6 +163,14 @@ A base de conhecimento também fica disponível pela API:
 curl http://localhost:8001/knowledge-base
 curl http://localhost:8001/knowledge-base/network
 ```
+
+O relatório operacional consolida dados úteis para apresentação técnica e acompanhamento futuro:
+
+```bash
+curl http://localhost:8001/reports/operational
+```
+
+Ele retorna contadores de chamados ativos, resolvidos, críticos, impacto de parada total, aderência de SLA, carga por técnico e uma fila curta de atenção para priorizar o atendimento.
 
 ### 5. Rode os testes
 
@@ -183,6 +194,7 @@ Com o backend rodando em `http://localhost:8001`, valide os principais endpoints
 ```bash
 curl http://localhost:8001/health
 curl http://localhost:8001/stats
+curl http://localhost:8001/reports/operational
 curl -X POST http://localhost:8001/demo/recruiter/reset
 curl http://localhost:8001/knowledge-base
 ```
