@@ -313,6 +313,12 @@ def get_stats(service: TicketService = Depends(get_ticket_service)):
     return service.get_stats()
 
 
+@app.get("/reports/operational", tags=["Reports"])
+def get_operational_report(service: TicketService = Depends(get_ticket_service)):
+    """Relatório JSON com visão operacional para gestão do helpdesk."""
+    return service.get_operational_metrics()
+
+
 @app.post("/demo/recruiter/reset", response_model=TicketListResponse, tags=["Demo"])
 def reset_recruiter_demo_data(db: Session = Depends(get_db)):
     """Preparar uma base pequena e limpa para apresentar o portfólio."""
