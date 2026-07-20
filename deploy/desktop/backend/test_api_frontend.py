@@ -25,7 +25,7 @@ def test_health_reports_current_version():
     payload = response.json()
     assert payload["status"] == "healthy"
     assert payload["service"] == "ivan-helpdesk"
-    assert payload["version"] == "0.3.9"
+    assert payload["version"] == "0.4.0"
 
 
 def test_home_serves_spa_frontend():

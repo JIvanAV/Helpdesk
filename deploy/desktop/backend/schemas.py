@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-API_VERSION = "0.3.9"
+API_VERSION = "0.4.0"
 
 
 class TicketBase(BaseModel):

@@ -22,6 +22,8 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Registro do técnico logado ao assumir ou atualizar chamados
 - Comentários internos de técnicos anexados ao histórico do chamado
 - Histórico de alterações/auditoria por chamado via endpoint `/tickets/{id}/audit`
+- Modo recrutador com botão **Preparar demo** e chamados realistas para apresentação rápida
+- Endpoint `POST /demo/recruiter/reset` para recriar o cenário local de demonstração
 - Busca por título, descrição, solicitante e e-mail
 - Filtros por status, categoria, prioridade e técnico responsável no dashboard
 - Campo de impacto operacional (`baixo`, `medio`, `alto`, `parada_total`) separado da prioridade técnica
@@ -140,6 +142,18 @@ Acesse:
 | http://localhost:8001/health | Verificação rápida da API |
 | http://localhost:8001/stats | Métricas do dashboard |
 
+### Modo recrutador
+
+Para uma apresentação rápida em entrevista, abra a interface e clique em **Preparar demo**. O sistema recria quatro chamados de exemplo com prioridade, impacto operacional, SLA, técnico responsável, resolução e feedback.
+
+Também é possível preparar o cenário pela API:
+
+```bash
+curl -X POST http://localhost:8001/demo/recruiter/reset
+```
+
+Roteiro sugerido: mostrar dashboard, assumir o chamado crítico, registrar comentário técnico, abrir histórico de auditoria e exportar CSV. Mais detalhes ficam em [`docs/RECRUITER_DEMO.md`](docs/RECRUITER_DEMO.md).
+
 A base de conhecimento também fica disponível pela API:
 
 ```bash
@@ -169,6 +183,7 @@ Com o backend rodando em `http://localhost:8001`, valide os principais endpoints
 ```bash
 curl http://localhost:8001/health
 curl http://localhost:8001/stats
+curl -X POST http://localhost:8001/demo/recruiter/reset
 curl http://localhost:8001/knowledge-base
 ```
 
@@ -178,7 +193,7 @@ Resultado esperado em `/health`:
 {
   "status": "healthy",
   "service": "ivan-helpdesk",
-  "version": "0.3.9",
+  "version": "0.4.0",
   "database": "connected"
 }
 ```
