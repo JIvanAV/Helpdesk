@@ -107,6 +107,34 @@ def test_home_serves_spa_frontend():
     assert "loadTicketAudit" in response.text
     assert "/audit" in response.text
     assert "auditTypeLabel" in response.text
+    assert "Modo recrutador" in response.text
+    assert "Preparar cenário de apresentação" in response.text
+    assert "prepareRecruiterDemo" in response.text
+    assert "/demo/recruiter/reset" in response.text
+
+
+def test_recruiter_demo_reset_endpoint_prepares_portfolio_scenario():
+    response = client.post("/demo/recruiter/reset")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 4
+    assert payload["page"] == 1
+    assert payload["page_size"] == 4
+
+    titles = {ticket["title"] for ticket in payload["tickets"]}
+    assert "Sistema financeiro indisponível" in titles
+    assert "Impressora do setor fiscal não imprime" in titles
+    assert any(ticket["impact"] == "parada_total" for ticket in payload["tickets"])
+    assert any(ticket["status"] == "resolvido" and ticket["feedback"] == 5 for ticket in payload["tickets"])
+    assert any(ticket["assigned_to"] == "José Ivan" for ticket in payload["tickets"])
+
+    stats_response = client.get("/stats")
+    assert stats_response.status_code == 200
+    stats = stats_response.json()
+    assert stats["total"] == 4
+    assert stats["by_impact"]["parada_total"] == 1
+    assert stats["by_status"]["resolvido"] == 1
 
 
 def test_knowledge_base_endpoint_returns_category_checklists():
