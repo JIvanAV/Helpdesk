@@ -30,6 +30,23 @@
       </div>
     </header>
 
+    <section class="mb-8 rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-5 shadow-xl shadow-slate-950/20" aria-label="Demonstração para recrutadores">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-wide text-emerald-300">Modo recrutador</p>
+          <h2 class="mt-1 text-xl font-bold text-white">Preparar cenário de apresentação</h2>
+          <p class="mt-1 max-w-3xl text-sm text-slate-400">Carrega chamados de exemplo com prioridades, impacto operacional, SLA, técnico responsável e resolução para demonstrar o fluxo completo em poucos minutos.</p>
+        </div>
+        <button class="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-60" type="button" :disabled="loading" @click="prepareRecruiterDemo()">Preparar demo</button>
+      </div>
+      <ol class="mt-4 grid gap-2 text-sm text-emerald-50/90 md:grid-cols-4">
+        <li class="rounded-xl border border-emerald-400/20 bg-slate-950/40 p-3">1. Abrir painel e métricas</li>
+        <li class="rounded-xl border border-emerald-400/20 bg-slate-950/40 p-3">2. Assumir chamado crítico</li>
+        <li class="rounded-xl border border-emerald-400/20 bg-slate-950/40 p-3">3. Registrar comentário técnico</li>
+        <li class="rounded-xl border border-emerald-400/20 bg-slate-950/40 p-3">4. Mostrar auditoria e CSV</li>
+      </ol>
+    </section>
+
     <section class="mb-8 rounded-3xl border border-indigo-500/20 bg-indigo-500/10 p-5 shadow-xl shadow-slate-950/20" aria-label="Sessão do técnico">
       <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
@@ -583,6 +600,22 @@
 
             this.setMessage('success', 'Chamado criado com sucesso.');
             this.resetTicketForm();
+            await this.loadAll();
+          } catch (err) {
+            this.setMessage('error', err.message);
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async prepareRecruiterDemo() {
+          this.loading = true;
+          this.message = '';
+          try {
+            const res = await fetch('/demo/recruiter/reset', { method: 'POST' });
+            if (!res.ok) throw new Error('Não foi possível preparar a demonstração.');
+            this.clearFilters();
+            this.setMessage('success', 'Demo para recrutador preparado com chamados de exemplo.');
             await this.loadAll();
           } catch (err) {
             this.setMessage('error', err.message);
