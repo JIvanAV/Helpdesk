@@ -446,6 +446,16 @@ class TicketService:
             for ticket in ordered[:5]
         ]
 
+    def _closure_ready_count(self, tickets: list[Ticket]) -> int:
+        """Count active tickets with all closure checklist items completed."""
+        ready = 0
+        for ticket in tickets:
+            if ticket.status in Ticket.CLOSED_STATUSES:
+                continue
+            if not self._missing_closure_items(ticket, {}):
+                ready += 1
+        return ready
+
     def get_operational_metrics(self) -> dict:
         """Return a manager-friendly JSON report for the helpdesk operation."""
         tickets = self.db.query(Ticket).order_by(desc(Ticket.created_at)).all()
@@ -462,6 +472,7 @@ class TicketService:
             "critical_tickets_count": len([ticket for ticket in active if ticket.priority == "critica"]),
             "parada_total_count": len([ticket for ticket in active if ticket.impact == "parada_total"]),
             "unassigned_tickets": len([ticket for ticket in active if not ticket.assigned_to]),
+            "closure_ready_tickets": self._closure_ready_count(tickets),
             "stale_tickets_24h": len([ticket for ticket in active if ticket.updated_at and ticket.updated_at.replace(tzinfo=None) < stale_since]),
             "sla_adherence_percent": round((len(resolved_on_time) / len(resolved) * 100), 2) if resolved else 0.0,
             "avg_resolution_hours": self._average_resolution_hours(),
