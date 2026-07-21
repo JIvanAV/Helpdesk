@@ -49,3 +49,11 @@ def init_db() -> None:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN impact VARCHAR(20) NOT NULL DEFAULT 'baixo'"))
         if "internal_comments" not in columns:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN internal_comments TEXT"))
+        if "checklist_solution_registered" not in columns:
+            conn.execute(text("ALTER TABLE tickets ADD COLUMN checklist_solution_registered INTEGER DEFAULT 0"))
+        if "checklist_user_validated" not in columns:
+            conn.execute(text("ALTER TABLE tickets ADD COLUMN checklist_user_validated INTEGER DEFAULT 0"))
+        if "checklist_evidence_collected" not in columns:
+            conn.execute(text("ALTER TABLE tickets ADD COLUMN checklist_evidence_collected INTEGER DEFAULT 0"))
+        if "checklist_equipment_ok" not in columns:
+            conn.execute(text("ALTER TABLE tickets ADD COLUMN checklist_equipment_ok INTEGER DEFAULT 0"))

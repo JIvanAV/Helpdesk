@@ -34,6 +34,13 @@ class Ticket(Base):
     assigned_to = Column(String(100), nullable=True, index=True)
     origin = Column(String(50), nullable=False, default="portal", index=True)  # email, telefone, whatsapp, portal, presencial
     resolution = Column(Text, nullable=True)
+
+    # Closure checklist
+    checklist_solution_registered = Column(Integer, default=0)  # 0: false, 1: true
+    checklist_user_validated = Column(Integer, default=0)
+    checklist_evidence_collected = Column(Integer, default=0)
+    checklist_equipment_ok = Column(Integer, default=0)
+
     internal_comments = Column(Text, nullable=True)
     feedback = Column(Integer, nullable=True)  # 1-5 feedback score
 
