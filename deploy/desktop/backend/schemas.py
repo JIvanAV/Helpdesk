@@ -37,6 +37,10 @@ class TicketUpdate(BaseModel):
     assigned_to: Optional[str] = Field(default=None, max_length=100)
     origin: Optional[str] = None
     resolution: Optional[str] = None
+    checklist_solution_registered: Optional[bool] = None
+    checklist_user_validated: Optional[bool] = None
+    checklist_evidence_collected: Optional[bool] = None
+    checklist_equipment_ok: Optional[bool] = None
     internal_comment: Optional[str] = Field(default=None, max_length=1000)
     feedback: Optional[int] = Field(default=None, ge=1, le=5, description="Nota de feedback de 1 a 5")
 
@@ -60,9 +64,14 @@ class TicketResponse(TicketBase):
     status: str
     assigned_to: Optional[str] = None
     resolution: Optional[str] = None
+    checklist_solution_registered: bool = False
+    checklist_user_validated: bool = False
+    checklist_evidence_collected: bool = False
+    checklist_equipment_ok: bool = False
     internal_comments: Optional[str] = None
     internal_comment_count: int = 0
     sla_status: Optional[str] = None
+
     created_at: datetime
     updated_at: datetime
     resolved_at: Optional[datetime] = None

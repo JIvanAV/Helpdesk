@@ -234,7 +234,7 @@ def test_ticket_crud_flow_via_api():
 
     update_response = client.patch(
         f"/tickets/{ticket['id']}",
-        json={"status": "resolvido", "resolution": "Driver de rede reinstalado e conexão validada."},
+        json={"status": "resolvido", "resolution": "Driver de rede reinstalado e conexão validada.", "checklist_solution_registered": True, "checklist_user_validated": True, "checklist_evidence_collected": True, "checklist_equipment_ok": True},
     )
 
     assert update_response.status_code == 200
@@ -303,6 +303,10 @@ def test_ticket_response_includes_computed_timeline_events():
             "status": "resolvido",
             "assigned_to": "José Ivan",
             "resolution": "Acesso revisado, permissão corrigida e usuário validou o login.",
+            "checklist_solution_registered": True,
+            "checklist_user_validated": True,
+            "checklist_evidence_collected": True,
+            "checklist_equipment_ok": True,
         },
     )
 
@@ -434,7 +438,7 @@ def test_ticket_resolution_updates_are_appended_as_history():
     )
     second = client.patch(
         f"/tickets/{ticket_id}",
-        json={"status": "resolvido", "assigned_to": "Ivan Suporte", "resolution": "Solução final aplicada."},
+        json={"status": "resolvido", "assigned_to": "Ivan Suporte", "resolution": "Solução final aplicada.", "checklist_solution_registered": True, "checklist_user_validated": True, "checklist_evidence_collected": True, "checklist_equipment_ok": True},
     )
 
     assert first.status_code == 200

@@ -12,6 +12,12 @@ from schemas import TicketCreate, TicketUpdate, TicketCommentCreate, TicketListR
 class TicketService:
     """Business logic for ticket operations."""
 
+    CLOSURE_CHECKLIST_FIELDS = {
+        "checklist_solution_registered": "solução registrada",
+        "checklist_user_validated": "usuário validou o atendimento",
+        "checklist_evidence_collected": "evidência coletada",
+        "checklist_equipment_ok": "equipamento ou acesso conferido",
+    }
     VALID_CATEGORIES = {"hardware", "software", "network", "access", "other"}
     VALID_PRIORITIES = {"baixa", "media", "alta", "critica"}
     VALID_IMPACTS = {"baixo", "medio", "alto", "parada_total"}
@@ -43,6 +49,31 @@ class TicketService:
 
     def _validate_origin(self, origin: str) -> str:
         return self._normalize_choice("Origem", origin, self.VALID_ORIGINS)
+
+    @staticmethod
+    def _checklist_done(value) -> bool:
+        """Convert checkbox-style values from API/DB to a plain boolean."""
+        return bool(value)
+
+    def _missing_closure_items(self, ticket: Ticket, update_data: dict) -> list[str]:
+        """Return checklist items still open after the requested update."""
+        missing = []
+        for field, label in self.CLOSURE_CHECKLIST_FIELDS.items():
+            current_value = update_data.get(field, getattr(ticket, field, 0))
+            if not self._checklist_done(current_value):
+                missing.append(label)
+        return missing
+
+    def _validate_closure_checklist(self, ticket: Ticket, update_data: dict) -> None:
+        """Require a completed closure checklist before final statuses."""
+        next_status = update_data.get("status", ticket.status)
+        if next_status not in Ticket.CLOSED_STATUSES:
+            return
+
+        missing_items = self._missing_closure_items(ticket, update_data)
+        if missing_items:
+            readable_items = ", ".join(missing_items)
+            raise ValueError(f"Finalize o checklist de fechamento antes de encerrar: {readable_items}.")
 
     def create_ticket(self, ticket_data: TicketCreate) -> Ticket:
         """Create a new ticket."""
@@ -118,8 +149,13 @@ class TicketService:
             "origin": "Origem",
             "assigned_to": "Responsável",
             "feedback": "Feedback",
+            "checklist_solution_registered": "Checklist: solução registrada",
+            "checklist_user_validated": "Checklist: usuário validou",
+            "checklist_evidence_collected": "Checklist: evidência coletada",
+            "checklist_equipment_ok": "Checklist: equipamento/acesso conferido",
         }
         events = []
+
         for field, label in labels.items():
             if field in update_data and update_data[field] != previous.get(field):
                 before = previous.get(field) or "não informado"
@@ -245,6 +281,10 @@ class TicketService:
             "assigned_to": ticket.assigned_to,
             "feedback": ticket.feedback,
             "resolution": ticket.resolution,
+            "checklist_solution_registered": ticket.checklist_solution_registered,
+            "checklist_user_validated": ticket.checklist_user_validated,
+            "checklist_evidence_collected": ticket.checklist_evidence_collected,
+            "checklist_equipment_ok": ticket.checklist_equipment_ok,
         }
         audit_author = update_data.get("assigned_to") or ticket.assigned_to
         internal_comment_author = None
@@ -275,6 +315,8 @@ class TicketService:
                  raise ValueError("Feedback só pode ser adicionado em chamados finalizados.")
             if not (1 <= update_data["feedback"] <= 5):
                  raise ValueError("Feedback deve ser entre 1 e 5.")
+
+        self._validate_closure_checklist(ticket, update_data)
 
         # Lógica de histórico para o campo de resolução
         if "internal_comment" in update_data:
