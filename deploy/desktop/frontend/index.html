@@ -377,6 +377,33 @@
                 <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.resolution_note" placeholder="Novo comentário do técnico" />
                 <button class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-500" @click="updateTicket(ticket)">Salvar</button>
               </div>
+              <section class="mt-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4" aria-label="Checklist de fechamento do chamado">
+                <div class="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p class="text-sm font-bold text-emerald-200">Checklist de fechamento</p>
+                    <p class="text-xs text-slate-400">Marque os itens antes de resolver ou fechar o chamado.</p>
+                  </div>
+                  <span class="rounded-full px-3 py-1 text-xs font-bold" :class="closureReady(ticket) ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-300'" x-text="closureReady(ticket) ? 'Pronto para encerrar' : 'Checklist pendente'"></span>
+                </div>
+                <div class="mt-3 grid gap-2 text-xs text-slate-100 sm:grid-cols-2">
+                  <label class="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2">
+                    <input type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-950 text-emerald-500" x-model="ticket.checklist_solution_registered" />
+                    <span>Solução registrada no histórico</span>
+                  </label>
+                  <label class="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2">
+                    <input type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-950 text-emerald-500" x-model="ticket.checklist_user_validated" />
+                    <span>Usuário validou o atendimento</span>
+                  </label>
+                  <label class="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2">
+                    <input type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-950 text-emerald-500" x-model="ticket.checklist_evidence_collected" />
+                    <span>Evidência coletada</span>
+                  </label>
+                  <label class="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2">
+                    <input type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-950 text-emerald-500" x-model="ticket.checklist_equipment_ok" />
+                    <span>Equipamento ou acesso conferido</span>
+                  </label>
+                </div>
+              </section>
               <div class="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
                 <input class="rounded-xl border border-amber-500/30 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.internal_comment_note" maxlength="1000" placeholder="Comentário interno para a equipe técnica" />
                 <button class="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-bold text-amber-100 hover:bg-amber-500/20" type="button" @click="addInternalComment(ticket)">Adicionar comentário interno</button>
@@ -509,6 +536,7 @@
           return [
             { label: 'Ativos', value: this.operationalReport.active_tickets || 0, hint: 'Chamados ainda em atendimento' },
             { label: 'Sem técnico', value: this.operationalReport.unassigned_tickets || 0, hint: 'Precisam de triagem inicial' },
+            { label: 'Prontos para encerrar', value: this.operationalReport.closure_ready_tickets || 0, hint: 'Checklist de fechamento completo' },
             { label: 'Parada total', value: this.operationalReport.parada_total_count || 0, hint: 'Impacto operacional mais alto' },
             { label: 'SLA resolvido', value: `${this.operationalReport.sla_adherence_percent || 0}%`, hint: 'Base para acompanhamento futuro' }
           ];
@@ -579,6 +607,10 @@
           return {
             ...ticket,
             audit_events: ticket.audit_events || [],
+            checklist_solution_registered: Boolean(ticket.checklist_solution_registered),
+            checklist_user_validated: Boolean(ticket.checklist_user_validated),
+            checklist_evidence_collected: Boolean(ticket.checklist_evidence_collected),
+            checklist_equipment_ok: Boolean(ticket.checklist_equipment_ok),
             resolution_note: '',
             internal_comment_note: ''
           };
@@ -673,7 +705,11 @@
           const payload = {
             status: ticket.status,
             assigned_to: ticket.assigned_to || this.currentTechnician,
-            resolution: ticket.resolution_note?.trim() || null
+            resolution: ticket.resolution_note?.trim() || null,
+            checklist_solution_registered: Boolean(ticket.checklist_solution_registered),
+            checklist_user_validated: Boolean(ticket.checklist_user_validated),
+            checklist_evidence_collected: Boolean(ticket.checklist_evidence_collected),
+            checklist_equipment_ok: Boolean(ticket.checklist_equipment_ok)
           };
 
           const res = await fetch('/tickets/' + ticket.id, {
@@ -713,6 +749,15 @@
           ticket.assigned_to = this.currentTechnician;
           ticket.status = 'em_andamento';
           await this.updateTicket(ticket);
+        },
+
+        closureReady(ticket) {
+          return Boolean(
+            ticket.checklist_solution_registered &&
+            ticket.checklist_user_validated &&
+            ticket.checklist_evidence_collected &&
+            ticket.checklist_equipment_ok
+          );
         },
 
         originLabel(origin) {
