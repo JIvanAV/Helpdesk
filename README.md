@@ -32,6 +32,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Base de conhecimento por categoria com checklists de suporte N1/N2
 - Endpoint `/knowledge-base` para consultar dicas por categoria do chamado
 - Relatório operacional JSON avançado em `/reports/operational` com fila de atenção, carga por técnico e indicadores de SLA
+- Checklist de fechamento antes de resolver/fechar chamados, com validação no backend e controles na SPA
 - Painel visual na SPA para apresentar os principais indicadores do relatório operacional
 - Botão para limpar filtros e voltar rapidamente à listagem principal
 - Ordenação por prioridade para destacar chamados críticos
@@ -170,7 +171,18 @@ O relatório operacional consolida dados úteis para apresentação técnica e a
 curl http://localhost:8001/reports/operational
 ```
 
-Ele retorna contadores de chamados ativos, resolvidos, críticos, impacto de parada total, aderência de SLA, carga por técnico e uma fila curta de atenção para priorizar o atendimento.
+Ele retorna contadores de chamados ativos, resolvidos, críticos, impacto de parada total, aderência de SLA, chamados prontos para encerramento, carga por técnico e uma fila curta de atenção para priorizar o atendimento.
+
+### Checklist de fechamento
+
+Antes de marcar um chamado como **Resolvido** ou **Fechado**, o técnico precisa confirmar quatro itens na interface ou pela API:
+
+- solução registrada no histórico;
+- usuário validou o atendimento;
+- evidência coletada;
+- equipamento ou acesso conferido.
+
+Essa regra evita encerramentos apressados no demo e simula uma rotina real de suporte N1/N2. O endpoint `PATCH /tickets/{id}` retorna erro `400` quando algum item obrigatório fica pendente.
 
 ### 5. Rode os testes
 

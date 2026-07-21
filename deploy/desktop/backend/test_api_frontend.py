@@ -115,6 +115,12 @@ def test_home_serves_spa_frontend():
     assert "/reports/operational" in response.text
     assert "operationalReportItems" in response.text
     assert "Fila de atenção" in response.text
+    assert "Checklist de fechamento" in response.text
+    assert "Pronto para encerrar" in response.text
+    assert "Checklist pendente" in response.text
+    assert "checklist_solution_registered" in response.text
+    assert "closureReady(ticket)" in response.text
+    assert "Prontos para encerrar" in response.text
 
 
 def test_recruiter_demo_reset_endpoint_prepares_portfolio_scenario():
@@ -155,6 +161,8 @@ def test_operational_report_endpoint_returns_management_metrics():
     assert payload["critical_tickets_count"] == 1
     assert payload["parada_total_count"] == 1
     assert payload["unassigned_tickets"] >= 0
+    assert "closure_ready_tickets" in payload
+    assert payload["closure_ready_tickets"] >= 0
     assert payload["avg_resolution_hours"] >= 0
     assert "generated_at" in payload
     assert "by_status" in payload
@@ -209,6 +217,8 @@ def test_ticket_export_csv_download_contains_created_ticket():
     assert "text/csv" in response.headers["content-type"]
     assert "ivan-helpdesk-chamados.csv" in response.headers["content-disposition"]
     assert "id;titulo;categoria;prioridade;impacto;status;origem" in response.text
+    assert "checklist_solucao_registrada" in response.text
+    assert "checklist_usuario_validou" in response.text
     assert f"Exportacao CSV {run_marker}" in response.text
     assert f"qa.export.{run_marker}@example.com" in response.text
 
@@ -254,6 +264,67 @@ def test_ticket_crud_flow_via_api():
     assert "by_sla_status" in stats_payload
     assert "no_prazo" in stats_payload["by_sla_status"]
 
+
+
+def test_ticket_closure_requires_completed_checklist():
+    run_marker = uuid4().hex[:8]
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Checklist fechamento {run_marker}",
+            "description": "Chamado usado para validar checklist antes do encerramento.",
+            "category": "hardware",
+            "priority": "alta",
+            "requester_name": "QA Checklist",
+            "requester_email": f"qa.checklist.{run_marker}@example.com",
+        },
+    )
+
+    assert create_response.status_code == 201
+    ticket = create_response.json()
+    assert ticket["checklist_solution_registered"] is False
+    assert ticket["checklist_user_validated"] is False
+
+    blocked = client.patch(
+        f"/tickets/{ticket['id']}",
+        json={
+            "status": "resolvido",
+            "resolution": "Troca de cabo realizada, aguardando validação final.",
+            "checklist_solution_registered": True,
+        },
+    )
+
+    assert blocked.status_code == 400
+    assert "Finalize o checklist de fechamento" in blocked.json()["detail"]
+    assert "usuário validou" in blocked.json()["detail"]
+
+    finished = client.patch(
+        f"/tickets/{ticket['id']}",
+        json={
+            "status": "resolvido",
+            "assigned_to": "Ivan Suporte",
+            "resolution": "Checklist concluído e usuário confirmou o retorno do equipamento.",
+            "checklist_solution_registered": True,
+            "checklist_user_validated": True,
+            "checklist_evidence_collected": True,
+            "checklist_equipment_ok": True,
+        },
+    )
+
+    assert finished.status_code == 200
+    payload = finished.json()
+    assert payload["status"] == "resolvido"
+    assert payload["resolved_at"] is not None
+    assert payload["checklist_solution_registered"] is True
+    assert payload["checklist_user_validated"] is True
+    assert payload["checklist_evidence_collected"] is True
+    assert payload["checklist_equipment_ok"] is True
+
+    audit_response = client.get(f"/tickets/{ticket['id']}/audit")
+    assert audit_response.status_code == 200
+    descriptions = [event["description"] for event in audit_response.json()]
+    assert any("Checklist: solução registrada" in item for item in descriptions)
+    assert any("Checklist: usuário validou" in item for item in descriptions)
 
 def test_ticket_response_includes_sla_status():
     run_marker = uuid4().hex[:8]
