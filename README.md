@@ -70,9 +70,11 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 7. Comentários nos chamados
 8. Histórico de alterações ✅ auditoria por chamado disponível na API e na SPA
 9. Dockerfile e docker-compose ✅ demo local containerizado na porta 8001
-10. CI com GitHub Actions
-
-## Como rodar o aplicativo no seu PC
+73|10. CI com GitHub Actions
+74|
+75|- Adicionado workflow automatizado em `.github/workflows/ci.yml` para rodar testes a cada push.
+76|
+77|## Como rodar o aplicativo no seu PC
 
 ### Pré-requisitos
 
