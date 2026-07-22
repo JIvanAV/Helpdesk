@@ -1,0 +1,17 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r deploy/desktop/backend/requirements.txt
+      - name: Run tests
+        run: |
+          cd deploy/desktop/backend
+          python -m pytest test_api_frontend.py
