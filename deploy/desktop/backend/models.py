@@ -24,6 +24,9 @@ class Ticket(Base):
     priority = Column(String(20), nullable=False, default="media", index=True)  # baixa, media, alta, critica
     impact = Column(String(20), nullable=False, default="baixo", index=True)  # baixo, medio, alto, parada_total
     status = Column(String(20), nullable=False, default="aberto", index=True)  # aberto, em_andamento, resolvido, fechado
+    
+    # Nível de suporte: N1 ou N2
+    support_level = Column(String(2), nullable=False, default="N1", index=True)
 
     # Requester info
     requester_name = Column(String(100), nullable=False)
@@ -54,6 +57,7 @@ class Ticket(Base):
         Index("ix_tickets_status_priority", "status", "priority"),
         Index("ix_tickets_category_status", "category", "status"),
         Index("ix_tickets_requester_email_created", "requester_email", "created_at"),
+        Index("ix_tickets_status_support_level", "status", "support_level"),
     )
 
     @property
@@ -101,6 +105,24 @@ class Ticket(Base):
                 )
             )
 
+        if self.support_level == "N2":
+            events.append(
+                self._timeline_event(
+                    "Escalamento N2",
+                    "Chamado movido para suporte especializado.",
+                    self.updated_at,
+                )
+            )
+
+        if self.support_level == "N2":
+            events.append(
+                self._timeline_event(
+                    "Escalamento N2",
+                    "Chamado movido para suporte especializado.",
+                    self.updated_at,
+                )
+            )
+
         if self.updated_at and self.created_at and self.updated_at != self.created_at:
             events.append(
                 self._timeline_event(
@@ -129,4 +151,4 @@ class Ticket(Base):
         return self.internal_comments.count("[comentário interno]")
 
     def __repr__(self):
-        return f"<Ticket(id={self.id}, title='{self.title}', status='{self.status}', priority='{self.priority}')>"
+        return f"<Ticket(id={self.id}, title='{self.title}', status='{self.status}', priority='{self.priority}', level='{self.support_level}')>"

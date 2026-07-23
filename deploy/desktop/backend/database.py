@@ -57,3 +57,5 @@ def init_db() -> None:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN checklist_evidence_collected INTEGER DEFAULT 0"))
         if "checklist_equipment_ok" not in columns:
             conn.execute(text("ALTER TABLE tickets ADD COLUMN checklist_equipment_ok INTEGER DEFAULT 0"))
+        if "support_level" not in columns:
+            conn.execute(text("ALTER TABLE tickets ADD COLUMN support_level VARCHAR(2) NOT NULL DEFAULT 'N1'"))
