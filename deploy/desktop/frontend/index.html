@@ -142,7 +142,7 @@
         <p class="mt-1 text-xs text-slate-500">Até cinco chamados priorizados por SLA, criticidade e data de abertura.</p>
         <ul class="mt-3 space-y-2" x-show="operationalReport.attention_queue?.length">
           <template x-for="ticket in operationalReport.attention_queue" :key="ticket.id">
-            <li class="rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2" x-text="'#' + ticket.id + ' • ' + ticket.title + ' • ' + ticket.priority + ' • ' + impactLabel(ticket.impact) + ' • ' + ticket.assigned_to"></li>
+            <li class="rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2" x-text="'#' + ticket.id + ' • ' + ticket.title + ' • ' + ticket.priority + ' • ' + impactLabel(ticket.impact) + ' • ' + supportLevelLabel(ticket.support_level) + ' • ' + ticket.assigned_to"></li>
           </template>
         </ul>
         <p class="mt-3 text-xs text-slate-500" x-show="!operationalReport.attention_queue?.length">Nenhum chamado exige atenção especial agora.</p>
@@ -285,6 +285,11 @@
               <option value="medio">Médio</option>
               <option value="baixo">Baixo</option>
             </select>
+            <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="supportLevelFilter" @change="loadTickets()" aria-label="Filtrar por nível de suporte">
+              <option value="">Todos os níveis</option>
+              <option value="N1">Suporte N1</option>
+              <option value="N2">Suporte N2</option>
+            </select>
             <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="originFilter" @change="loadTickets()" aria-label="Filtrar por origem do chamado">
               <option value="">Todas as origens</option>
               <option value="portal">Portal</option>
@@ -310,7 +315,7 @@
             <article class="rounded-2xl border border-slate-800 bg-slate-950 p-4">
               <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p class="text-xs font-semibold uppercase tracking-wide text-blue-300" x-text="'#' + ticket.id + ' • ' + ticket.category + ' • ' + ticket.priority + ' • ' + impactLabel(ticket.impact) + ' • ' + originLabel(ticket.origin)"></p>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-blue-300" x-text="'#' + ticket.id + ' • ' + ticket.category + ' • ' + ticket.priority + ' • ' + impactLabel(ticket.impact) + ' • ' + supportLevelLabel(ticket.support_level) + ' • ' + originLabel(ticket.origin)"></p>
                   <h3 class="mt-1 text-lg font-bold" x-text="ticket.title"></h3>
                   <p class="mt-1 text-sm text-slate-300" x-text="ticket.description"></p>
                   <p class="mt-2 text-xs text-slate-500" x-text="ticket.requester_name + ' • ' + ticket.requester_email"></p>
@@ -361,8 +366,11 @@
                     </ol>
                   </details>
                 </div>
-                <span class="rounded-full px-3 py-1 text-xs font-bold" :class="statusBadge(ticket.status)" x-text="statusLabel(ticket.status)"></span>
-                <span class="rounded-full px-3 py-1 text-xs font-bold" :class="slaBadge(ticket.sla_status)" x-text="slaLabel(ticket.sla_status)"></span>
+                <div class="flex flex-wrap gap-2">
+                  <span class="rounded-full px-3 py-1 text-xs font-bold" :class="supportLevelBadge(ticket.support_level)" x-text="supportLevelLabel(ticket.support_level)"></span>
+                  <span class="rounded-full px-3 py-1 text-xs font-bold" :class="statusBadge(ticket.status)" x-text="statusLabel(ticket.status)"></span>
+                  <span class="rounded-full px-3 py-1 text-xs font-bold" :class="slaBadge(ticket.sla_status)" x-text="slaLabel(ticket.sla_status)"></span>
+                </div>
               </div>
 
               <div class="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto_1fr_auto]">
@@ -373,6 +381,10 @@
                   <option value="fechado">Fechado</option>
                 </select>
                 <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.assigned_to" placeholder="Técnico responsável" />
+                <select class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.support_level" aria-label="Nível de suporte do chamado">
+                  <option value="N1">Suporte N1</option>
+                  <option value="N2">Suporte N2</option>
+                </select>
                 <button class="rounded-xl border border-blue-500/40 bg-blue-500/10 px-4 py-2 text-sm font-bold text-blue-200 hover:bg-blue-500/20" type="button" @click="assumeTicket(ticket)">Assumir chamado</button>
                 <input class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm" x-model="ticket.resolution_note" placeholder="Novo comentário do técnico" />
                 <button class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-500" @click="updateTicket(ticket)">Salvar</button>
@@ -474,7 +486,7 @@
         message: '',
         messageType: 'success',
         tickets: [],
-        stats: { total: 0, open: 0, avg_resolution_hours: 0, by_status: {}, by_priority: {}, by_impact: {}, by_category: {}, by_origin: {}, by_sla_status: {} },
+        stats: { total: 0, open: 0, avg_resolution_hours: 0, by_status: {}, by_priority: {}, by_impact: {}, by_category: {}, by_origin: {}, by_support_level: {}, by_sla_status: {} },
         operationalReport: { attention_queue: [], technician_load: {} },
         knowledgeBase: {},
         technicianSession: { ...DEFAULT_TECHNICIAN_SESSION },
@@ -484,6 +496,7 @@
         categoryFilter: '',
         priorityFilter: '',
         impactFilter: '',
+        supportLevelFilter: '',
         assigneeFilter: '',
         originFilter: '',
         searchTerm: '',
@@ -528,6 +541,7 @@
             `${this.stats.by_priority?.critica || 0} críticos`,
             `${this.stats.by_impact?.parada_total || 0} com parada total`,
             `${this.stats.by_sla_status?.atrasado || 0} fora do SLA`,
+            `${this.stats.by_support_level?.N2 || 0} na fila N2`,
             `${this.avgResolutionLabel} de tempo médio`
           ];
         },
@@ -538,6 +552,7 @@
             { label: 'Sem técnico', value: this.operationalReport.unassigned_tickets || 0, hint: 'Precisam de triagem inicial' },
             { label: 'Prontos para encerrar', value: this.operationalReport.closure_ready_tickets || 0, hint: 'Checklist de fechamento completo' },
             { label: 'Parada total', value: this.operationalReport.parada_total_count || 0, hint: 'Impacto operacional mais alto' },
+            { label: 'Fila N2', value: this.operationalReport.n2_queue_count || 0, hint: 'Chamados para suporte especializado' },
             { label: 'SLA resolvido', value: `${this.operationalReport.sla_adherence_percent || 0}%`, hint: 'Base para acompanhamento futuro' }
           ];
         },
@@ -597,6 +612,7 @@
           if (this.categoryFilter) params.set('category', this.categoryFilter);
           if (this.priorityFilter) params.set('priority', this.priorityFilter);
           if (this.impactFilter) params.set('impact', this.impactFilter);
+          if (this.supportLevelFilter) params.set('support_level', this.supportLevelFilter);
           if (this.assigneeFilter.trim().length >= 2) params.set('assigned_to', this.assigneeFilter.trim());
           if (this.originFilter) params.set('origin', this.originFilter);
           if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
@@ -611,6 +627,7 @@
             checklist_user_validated: Boolean(ticket.checklist_user_validated),
             checklist_evidence_collected: Boolean(ticket.checklist_evidence_collected),
             checklist_equipment_ok: Boolean(ticket.checklist_equipment_ok),
+            support_level: ticket.support_level || 'N1',
             resolution_note: '',
             internal_comment_note: ''
           };
@@ -648,6 +665,7 @@
           this.categoryFilter = '';
           this.priorityFilter = '';
           this.impactFilter = '';
+          this.supportLevelFilter = '';
           this.assigneeFilter = '';
           this.originFilter = '';
           this.statusFilter = '';
@@ -705,6 +723,7 @@
           const payload = {
             status: ticket.status,
             assigned_to: ticket.assigned_to || this.currentTechnician,
+            support_level: ticket.support_level || 'N1',
             resolution: ticket.resolution_note?.trim() || null,
             checklist_solution_registered: Boolean(ticket.checklist_solution_registered),
             checklist_user_validated: Boolean(ticket.checklist_user_validated),
@@ -767,6 +786,14 @@
         impactLabel(impact) {
           const labels = { baixo: 'Impacto baixo', medio: 'Impacto médio', alto: 'Impacto alto', parada_total: 'Parada total' };
           return labels[impact] || 'Impacto baixo';
+        },
+
+        supportLevelLabel(level) {
+          return level === 'N2' ? 'Suporte N2' : 'Suporte N1';
+        },
+
+        supportLevelBadge(level) {
+          return level === 'N2' ? 'bg-orange-500/10 text-orange-300' : 'bg-sky-500/10 text-sky-300';
         },
 
         auditTypeLabel(eventType) {
