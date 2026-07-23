@@ -30,6 +30,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Filtro e estatísticas por impacto operacional para apoiar triagem e relatórios futuros
 - Atribuição de chamados para técnico responsável pela interface
 - Base de conhecimento por categoria com checklists de suporte N1/N2
+- Fila de escalonamento N1/N2 com sugestão automática para chamados críticos ou com parada total
 - Endpoint `/knowledge-base` para consultar dicas por categoria do chamado
 - Relatório operacional JSON avançado em `/reports/operational` com fila de atenção, carga por técnico e indicadores de SLA
 - Checklist de fechamento antes de resolver/fechar chamados, com validação no backend e controles na SPA
@@ -173,7 +174,18 @@ O relatório operacional consolida dados úteis para apresentação técnica e a
 curl http://localhost:8001/reports/operational
 ```
 
-Ele retorna contadores de chamados ativos, resolvidos, críticos, impacto de parada total, aderência de SLA, chamados prontos para encerramento, carga por técnico e uma fila curta de atenção para priorizar o atendimento.
+Ele retorna contadores de chamados ativos, resolvidos, críticos, impacto de parada total, aderência de SLA, chamados prontos para encerramento, carga por técnico, fila N2 e uma fila curta de atenção para priorizar o atendimento.
+
+### Fila de escalonamento N1/N2
+
+Todo chamado começa em **Suporte N1**. Durante a atualização, o backend sugere **Suporte N2** quando identifica sinais de atendimento especializado:
+
+- prioridade `critica`;
+- impacto `parada_total`;
+- chamado de rede com impacto alto;
+- chamado de alta prioridade que já saiu do SLA.
+
+A SPA exibe o nível no card do chamado, permite filtrar por N1/N2 e envia `support_level` no `PATCH /tickets/{id}` quando o técnico ajusta manualmente a fila. O relatório `/reports/operational` também expõe `n2_queue_count` e `by_support_level`.
 
 ### Checklist de fechamento
 

@@ -9,6 +9,7 @@ Criar um cenário limpo com chamados realistas de suporte técnico para demonstr
 - triagem por prioridade e impacto operacional;
 - atendimento por técnico responsável;
 - acompanhamento de SLA;
+- fila de escalonamento N1/N2;
 - comentários de resolução e comentários internos;
 - auditoria do chamado e exportação CSV.
 
@@ -36,10 +37,11 @@ O botão chama `POST /demo/recruiter/reset`, recria os chamados de demonstraçã
 | Etapa | O que mostrar | Mensagem para entrevista |
 |---|---|---|
 | 1 | Dashboard e resumo executivo | "Aqui eu consigo visualizar volume, SLA, criticidade e impacto operacional." |
-| 2 | Chamado crítico de sistema financeiro | "Prioridade técnica e impacto operacional são tratados separadamente." |
+| 2 | Chamado crítico de sistema financeiro | "Prioridade técnica, impacto operacional e escalonamento N2 são tratados separadamente." |
 | 3 | Botão **Assumir chamado** | "O atendimento registra o técnico responsável e muda o status para andamento." |
 | 4 | Comentário técnico e comentário interno | "A solução pública e as notas internas ficam separadas para preservar o histórico." |
 | 5 | Histórico de alterações e CSV | "As mudanças ficam auditáveis e podem ser exportadas para relatório." |
+| 6 | Filtro **Suporte N2** | "A fila ajuda a enxergar o que precisa de apoio especializado." |
 
 ## Endpoint usado no demo
 
@@ -63,3 +65,4 @@ Resposta resumida:
 - O recurso é intencionalmente local e seguro para portfólio.
 - Não usa senhas reais nem dados de clientes reais.
 - O reset limpa os chamados atuais do banco local de demonstração antes de recriar o cenário.
+- O cenário já inclui chamados em **Suporte N2** para demonstrar escalonamento sem cadastro manual durante a entrevista.

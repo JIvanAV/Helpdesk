@@ -121,6 +121,12 @@ def test_home_serves_spa_frontend():
     assert "checklist_solution_registered" in response.text
     assert "closureReady(ticket)" in response.text
     assert "Prontos para encerrar" in response.text
+    assert "Todos os níveis" in response.text
+    assert "supportLevelFilter" in response.text
+    assert "Suporte N1" in response.text
+    assert "Suporte N2" in response.text
+    assert "supportLevelBadge(ticket.support_level)" in response.text
+    assert "support_level: ticket.support_level || 'N1'" in response.text
 
 
 def test_recruiter_demo_reset_endpoint_prepares_portfolio_scenario():
@@ -145,6 +151,43 @@ def test_recruiter_demo_reset_endpoint_prepares_portfolio_scenario():
     assert stats["total"] == 4
     assert stats["by_impact"]["parada_total"] == 1
     assert stats["by_status"]["resolvido"] == 1
+    assert stats["by_support_level"]["N2"] >= 1
+
+
+def test_support_level_escalates_critical_ticket_and_filters_n2_queue():
+    create_response = client.post(
+        "/tickets",
+        json={
+            "title": "Link principal instável",
+            "description": "Unidade perde conexão com o sistema interno durante o expediente.",
+            "category": "network",
+            "priority": "critica",
+            "impact": "parada_total",
+            "requester_name": "Coordenação Operacional",
+            "requester_email": f"n2.{uuid4().hex[:8]}@example.com",
+        },
+    )
+    assert create_response.status_code == 201
+    ticket = create_response.json()
+    assert ticket["support_level"] == "N1"
+
+    update_response = client.patch(
+        f"/tickets/{ticket['id']}",
+        json={"status": "em_andamento", "assigned_to": "José Ivan"},
+    )
+    assert update_response.status_code == 200
+    updated = update_response.json()
+    assert updated["support_level"] == "N2"
+    assert any(event["label"] == "Escalamento N2" for event in updated["timeline"])
+
+    filtered_response = client.get("/tickets?support_level=N2&page_size=100")
+    assert filtered_response.status_code == 200
+    filtered = filtered_response.json()["tickets"]
+    assert any(item["id"] == ticket["id"] for item in filtered)
+
+    stats_response = client.get("/stats")
+    assert stats_response.status_code == 200
+    assert stats_response.json()["by_support_level"]["N2"] >= 1
 
 
 def test_operational_report_endpoint_returns_management_metrics():
@@ -169,12 +212,14 @@ def test_operational_report_endpoint_returns_management_metrics():
     assert "by_priority" in payload
     assert "by_impact" in payload
     assert "by_origin" in payload
+    assert "by_support_level" in payload
+    assert payload["n2_queue_count"] >= 1
     assert "technician_load" in payload
     assert "José Ivan" in payload["technician_load"]
 
     attention_queue = payload["attention_queue"]
     assert 1 <= len(attention_queue) <= 5
-    expected_keys = {"id", "title", "priority", "impact", "status", "sla_status", "assigned_to"}
+    expected_keys = {"id", "title", "priority", "impact", "support_level", "status", "sla_status", "assigned_to"}
     assert expected_keys.issubset(attention_queue[0])
 
 
@@ -216,7 +261,7 @@ def test_ticket_export_csv_download_contains_created_ticket():
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
     assert "ivan-helpdesk-chamados.csv" in response.headers["content-disposition"]
-    assert "id;titulo;categoria;prioridade;impacto;status;origem" in response.text
+    assert "id;titulo;categoria;prioridade;impacto;nivel_suporte;status;origem" in response.text
     assert "checklist_solucao_registrada" in response.text
     assert "checklist_usuario_validou" in response.text
     assert f"Exportacao CSV {run_marker}" in response.text
