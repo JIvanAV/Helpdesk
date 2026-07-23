@@ -15,6 +15,7 @@ class TicketBase(BaseModel):
     category: str = Field(..., description="Category: hardware, software, network, access, other")
     priority: str = Field(default="media", description="Priority: baixa, media, alta, critica")
     impact: str = Field(default="baixo", description="Impacto operacional: baixo, medio, alto, parada_total")
+    support_level: str = Field(default="N1", description="Nível de suporte: N1 ou N2")
     origin: str = Field(default="portal", description="Origem: email, telefone, whatsapp, portal, presencial")
     requester_name: str = Field(..., min_length=2, max_length=100)
     requester_email: EmailStr
@@ -33,6 +34,7 @@ class TicketUpdate(BaseModel):
     category: Optional[str] = None
     priority: Optional[str] = None
     impact: Optional[str] = None
+    support_level: Optional[str] = None
     status: Optional[str] = Field(default=None, description="Status: aberto, em_andamento, resolvido, fechado")
     assigned_to: Optional[str] = Field(default=None, max_length=100)
     origin: Optional[str] = None

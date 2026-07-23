@@ -222,6 +222,7 @@ class TicketService:
         category: Optional[str] = None,
         priority: Optional[str] = None,
         impact: Optional[str] = None,
+        support_level: Optional[str] = None,
         requester_email: Optional[str] = None,
         assigned_to: Optional[str] = None,
         origin: Optional[str] = None,
@@ -239,6 +240,8 @@ class TicketService:
             query = query.filter(Ticket.priority == self._validate_priority(priority))
         if impact:
             query = query.filter(Ticket.impact == self._validate_impact(impact))
+        if support_level:
+            query = query.filter(Ticket.support_level == self._validate_support_level(support_level))
         if requester_email:
             query = query.filter(Ticket.requester_email == requester_email.lower().strip())
         if assigned_to:
@@ -476,6 +479,7 @@ class TicketService:
                 "title": ticket.title,
                 "priority": ticket.priority,
                 "impact": ticket.impact,
+                "support_level": ticket.support_level,
                 "status": ticket.status,
                 "sla_status": ticket.sla_status,
                 "assigned_to": ticket.assigned_to or "Sem técnico",
@@ -510,6 +514,7 @@ class TicketService:
             "parada_total_count": len([ticket for ticket in active if ticket.impact == "parada_total"]),
             "unassigned_tickets": len([ticket for ticket in active if not ticket.assigned_to]),
             "closure_ready_tickets": self._closure_ready_count(tickets),
+            "n2_queue_count": len([ticket for ticket in active if ticket.support_level == "N2"]),
             "stale_tickets_24h": len([ticket for ticket in active if ticket.updated_at and ticket.updated_at.replace(tzinfo=None) < stale_since]),
             "sla_adherence_percent": round((len(resolved_on_time) / len(resolved) * 100), 2) if resolved else 0.0,
             "avg_resolution_hours": self._average_resolution_hours(),
@@ -517,6 +522,7 @@ class TicketService:
             "by_priority": self._count_by(Ticket.priority),
             "by_impact": self._count_by(Ticket.impact),
             "by_origin": self._count_by(Ticket.origin),
+            "by_support_level": self._count_by(Ticket.support_level),
             "technician_load": self._technician_load(tickets),
             "attention_queue": self._attention_queue(tickets),
         }
@@ -532,6 +538,7 @@ class TicketService:
             "by_impact": self._count_by(Ticket.impact),
             "by_category": self._count_by(Ticket.category),
             "by_origin": self._count_by(Ticket.origin),
+            "by_support_level": self._count_by(Ticket.support_level),
             "by_sla_status": self._count_by_sla_status(),
             "avg_resolution_hours": self._average_resolution_hours(),
             "today": self._today_activity(),
