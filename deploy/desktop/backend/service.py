@@ -23,6 +23,7 @@ class TicketService:
     VALID_IMPACTS = {"baixo", "medio", "alto", "parada_total"}
     VALID_STATUSES = {"aberto", "em_andamento", "resolvido", "fechado"}
     VALID_ORIGINS = {"email", "telefone", "whatsapp", "portal", "presencial"}
+    VALID_SUPPORT_LEVELS = {"N1", "N2"}
 
     def __init__(self, db: Session):
         self.db = db
@@ -49,6 +50,31 @@ class TicketService:
 
     def _validate_origin(self, origin: str) -> str:
         return self._normalize_choice("Origem", origin, self.VALID_ORIGINS)
+
+    def _validate_support_level(self, support_level: str) -> str:
+        normalized = support_level.upper().strip()
+        if normalized not in self.VALID_SUPPORT_LEVELS:
+            raise ValueError("Nível de suporte inválido. Use: N1 ou N2")
+        return normalized
+
+    def _suggest_support_level(self, ticket: Ticket, update_data: dict) -> str:
+        """Suggest N2 when the ticket has signals that N1 should escalate."""
+        status = update_data.get("status", ticket.status)
+        if status in Ticket.CLOSED_STATUSES:
+            return update_data.get("support_level", ticket.support_level or "N1")
+
+        priority = update_data.get("priority", ticket.priority)
+        impact = update_data.get("impact", ticket.impact)
+        category = update_data.get("category", ticket.category)
+        sla_status = ticket.sla_status
+
+        if priority == "critica" or impact == "parada_total":
+            return "N2"
+        if category == "network" and impact in {"alto", "parada_total"}:
+            return "N2"
+        if sla_status == "atrasado" and priority in {"alta", "critica"}:
+            return "N2"
+        return update_data.get("support_level", ticket.support_level or "N1")
 
     @staticmethod
     def _checklist_done(value) -> bool:
@@ -85,6 +111,7 @@ class TicketService:
             impact=self._validate_impact(ticket_data.impact),
             origin=self._validate_origin(ticket_data.origin),
             status="aberto",
+            support_level="N1",
             requester_name=ticket_data.requester_name.strip(),
             requester_email=ticket_data.requester_email.lower().strip(),
             requester_department=ticket_data.requester_department.strip() if ticket_data.requester_department else None,
@@ -149,6 +176,7 @@ class TicketService:
             "origin": "Origem",
             "assigned_to": "Responsável",
             "feedback": "Feedback",
+            "support_level": "Nível de suporte",
             "checklist_solution_registered": "Checklist: solução registrada",
             "checklist_user_validated": "Checklist: usuário validou",
             "checklist_evidence_collected": "Checklist: evidência coletada",
@@ -280,6 +308,7 @@ class TicketService:
             "origin": ticket.origin,
             "assigned_to": ticket.assigned_to,
             "feedback": ticket.feedback,
+            "support_level": ticket.support_level,
             "resolution": ticket.resolution,
             "checklist_solution_registered": ticket.checklist_solution_registered,
             "checklist_user_validated": ticket.checklist_user_validated,
@@ -298,6 +327,9 @@ class TicketService:
             update_data["impact"] = self._validate_impact(update_data["impact"])
         if "origin" in update_data and update_data["origin"]:
             update_data["origin"] = self._validate_origin(update_data["origin"])
+        if "support_level" in update_data and update_data["support_level"]:
+            update_data["support_level"] = self._validate_support_level(update_data["support_level"])
+
         if "status" in update_data and update_data["status"]:
             new_status = self._validate_status(update_data["status"])
             update_data["status"] = new_status
@@ -315,6 +347,11 @@ class TicketService:
                  raise ValueError("Feedback só pode ser adicionado em chamados finalizados.")
             if not (1 <= update_data["feedback"] <= 5):
                  raise ValueError("Feedback deve ser entre 1 e 5.")
+
+        if "support_level" not in update_data:
+            suggested_level = self._suggest_support_level(ticket, update_data)
+            if suggested_level != ticket.support_level:
+                update_data["support_level"] = suggested_level
 
         self._validate_closure_checklist(ticket, update_data)
 

@@ -24,7 +24,7 @@ class Ticket(Base):
     priority = Column(String(20), nullable=False, default="media", index=True)  # baixa, media, alta, critica
     impact = Column(String(20), nullable=False, default="baixo", index=True)  # baixo, medio, alto, parada_total
     status = Column(String(20), nullable=False, default="aberto", index=True)  # aberto, em_andamento, resolvido, fechado
-    
+
     # Nível de suporte: N1 ou N2
     support_level = Column(String(2), nullable=False, default="N1", index=True)
 
@@ -101,15 +101,6 @@ class Ticket(Base):
                 self._timeline_event(
                     "Técnico atribuído",
                     f"Responsável: {self.assigned_to}",
-                    self.updated_at,
-                )
-            )
-
-        if self.support_level == "N2":
-            events.append(
-                self._timeline_event(
-                    "Escalamento N2",
-                    "Chamado movido para suporte especializado.",
                     self.updated_at,
                 )
             )
