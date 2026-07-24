@@ -87,6 +87,9 @@ def test_home_serves_spa_frontend():
     assert "buildTicketQuery" in response.text
     assert "editableTicket" in response.text
     assert "assigned_to: ticket.assigned_to || this.currentTechnician" in response.text
+    assert "Meus chamados" in response.text
+    assert "myTicketsOnly" in response.text
+    assert "toggleMyTickets" in response.text
     assert "Perfil de acesso" in response.text
     assert "ivan-helpdesk-role" in response.text
     assert "SESSION_KEYS" in response.text

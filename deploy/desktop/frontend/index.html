@@ -258,6 +258,7 @@
             <p class="text-sm text-slate-400">Atualize status, resolução e feedback direto pela interface.</p>
           </div>
           <div class="flex flex-col gap-2 sm:flex-row">
+            <button class="rounded-xl px-3 py-2 text-sm font-bold transition" :class="myTicketsOnly ? 'bg-indigo-600 text-white' : 'border border-indigo-500/40 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20'" @click="toggleMyTickets()" type="button">Meus chamados</button>
             <input class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="searchTerm" @input.debounce.350ms="loadTickets()" placeholder="Buscar chamado..." />
             <select class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm" x-model="sortOrder" @change="loadTickets()">
               <option value="recent">Mais recentes</option>
@@ -498,6 +499,7 @@
         impactFilter: '',
         supportLevelFilter: '',
         assigneeFilter: '',
+        myTicketsOnly: false,
         originFilter: '',
         searchTerm: '',
         sortOrder: 'recent',
@@ -585,11 +587,13 @@
 
         saveTechnicianSession() {
           authStorage.save(this.currentTechnician, this.technicianSession.role);
+          if (this.myTicketsOnly) this.loadTickets();
         },
 
         logoutTechnician() {
           authStorage.clear();
           this.technicianSession = { ...DEFAULT_TECHNICIAN_SESSION };
+          this.myTicketsOnly = false;
         },
 
         toggleTheme() {
@@ -613,7 +617,11 @@
           if (this.priorityFilter) params.set('priority', this.priorityFilter);
           if (this.impactFilter) params.set('impact', this.impactFilter);
           if (this.supportLevelFilter) params.set('support_level', this.supportLevelFilter);
-          if (this.assigneeFilter.trim().length >= 2) params.set('assigned_to', this.assigneeFilter.trim());
+          if (this.myTicketsOnly) {
+            params.set('assigned_to', this.currentTechnician);
+          } else if (this.assigneeFilter.trim().length >= 2) {
+            params.set('assigned_to', this.assigneeFilter.trim());
+          }
           if (this.originFilter) params.set('origin', this.originFilter);
           if (this.searchTerm.trim().length >= 2) params.set('search', this.searchTerm.trim());
           return params;
@@ -667,8 +675,15 @@
           this.impactFilter = '';
           this.supportLevelFilter = '';
           this.assigneeFilter = '';
+          this.myTicketsOnly = false;
           this.originFilter = '';
           this.statusFilter = '';
+          await this.loadTickets();
+        },
+
+        async toggleMyTickets() {
+          this.myTicketsOnly = !this.myTicketsOnly;
+          if (this.myTicketsOnly) this.assigneeFilter = '';
           await this.loadTickets();
         },
 
