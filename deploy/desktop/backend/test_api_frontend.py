@@ -129,6 +129,55 @@ def test_home_serves_spa_frontend():
     assert "support_level: ticket.support_level || 'N1'" in response.text
 
 
+def test_my_tickets_api_filter_returns_only_logged_technician_queue():
+    run_marker = uuid4().hex[:8]
+    assigned_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Meus chamados atribuido {run_marker}",
+            "description": "Chamado usado para validar filtro da fila individual do tecnico.",
+            "category": "software",
+            "priority": "media",
+            "requester_name": "QA Meus Chamados",
+            "requester_email": f"qa.mine.assigned.{run_marker}@example.com",
+        },
+    )
+    control_response = client.post(
+        "/tickets",
+        json={
+            "title": f"Meus chamados controle {run_marker}",
+            "description": "Chamado controle que pertence a outro tecnico.",
+            "category": "software",
+            "priority": "media",
+            "requester_name": "QA Meus Chamados",
+            "requester_email": f"qa.mine.control.{run_marker}@example.com",
+        },
+    )
+    assert assigned_response.status_code == 201
+    assert control_response.status_code == 201
+
+    assigned_ticket = assigned_response.json()
+    control_ticket = control_response.json()
+    first_update = client.patch(
+        f"/tickets/{assigned_ticket['id']}",
+        json={"status": "em_andamento", "assigned_to": "José Ivan"},
+    )
+    second_update = client.patch(
+        f"/tickets/{control_ticket['id']}",
+        json={"status": "em_andamento", "assigned_to": "Outro Técnico"},
+    )
+    assert first_update.status_code == 200
+    assert second_update.status_code == 200
+
+    response = client.get(f"/tickets?assigned_to=josé%20ivan&search={run_marker}&page_size=20")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 1
+    assert payload["tickets"][0]["id"] == assigned_ticket["id"]
+    assert payload["tickets"][0]["assigned_to"] == "José Ivan"
+
+
 def test_recruiter_demo_reset_endpoint_prepares_portfolio_scenario():
     response = client.post("/demo/recruiter/reset")
 
