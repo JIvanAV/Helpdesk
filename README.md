@@ -20,6 +20,7 @@ Criar um sistema simples, evolutivo e demonstrável para registrar chamados, aco
 - Autenticação simples de demonstração com técnico/perfil salvos no navegador
 - Login demo revisado com armazenamento centralizado (`SESSION_KEYS`/`authStorage`) para facilitar manutenção futura
 - Registro do técnico logado ao assumir ou atualizar chamados
+- Atalho **Meus chamados** para filtrar rapidamente a fila do técnico logado
 - Comentários internos de técnicos anexados ao histórico do chamado
 - Histórico de alterações/auditoria por chamado via endpoint `/tickets/{id}/audit`
 - Modo recrutador com botão **Preparar demo** e chamados realistas para apresentação rápida
@@ -159,7 +160,7 @@ Também é possível preparar o cenário pela API:
 curl -X POST http://localhost:8001/demo/recruiter/reset
 ```
 
-Roteiro sugerido: mostrar dashboard, assumir o chamado crítico, registrar comentário técnico, abrir histórico de auditoria e exportar CSV. Mais detalhes ficam em [`docs/RECRUITER_DEMO.md`](docs/RECRUITER_DEMO.md).
+Roteiro sugerido: mostrar dashboard, assumir o chamado crítico, usar **Meus chamados** para exibir somente a fila do técnico logado, registrar comentário técnico, abrir histórico de auditoria e exportar CSV. Mais detalhes ficam em [`docs/RECRUITER_DEMO.md`](docs/RECRUITER_DEMO.md).
 
 A base de conhecimento também fica disponível pela API:
 

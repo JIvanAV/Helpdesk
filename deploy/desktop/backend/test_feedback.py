@@ -37,8 +37,17 @@ def test_feedback_implementation(db):
     with pytest.raises(ValueError, match="Feedback só pode ser adicionado"):
         service.update_ticket(ticket.id, update_data)
         
-    # 3. Resolve ticket
-    service.update_ticket(ticket.id, TicketUpdate(status="resolvido"))
+    # 3. Resolve ticket after completing the closure checklist
+    service.update_ticket(
+        ticket.id,
+        TicketUpdate(
+            status="resolvido",
+            checklist_solution_registered=True,
+            checklist_user_validated=True,
+            checklist_evidence_collected=True,
+            checklist_equipment_ok=True,
+        ),
+    )
     
     # 4. Add feedback (should work)
     service.update_ticket(ticket.id, TicketUpdate(feedback=4))
