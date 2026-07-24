@@ -373,3 +373,8 @@ def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
+
+@app.get("/tickets/me")
+def read_my_tickets(technician: str):
+    """Return tickets for logged-in technician."""
+    return {"tickets": service.get_my_tickets(technician)}
