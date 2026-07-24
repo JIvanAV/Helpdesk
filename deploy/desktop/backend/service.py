@@ -497,10 +497,6 @@ class TicketService:
                 ready += 1
         return ready
 
-    def get_my_tickets(self, technician: str) -> list:
-        """Return tickets assigned to specific technician."""
-        return [t for t in self.get_tickets() if t.assigned_to == technician]
-
     def get_operational_metrics(self) -> dict:
         """Return a manager-friendly JSON report for the helpdesk operation."""
         tickets = self.db.query(Ticket).order_by(desc(Ticket.created_at)).all()
