@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, EmailStr, Field
 from models import TicketStatus, TicketPriority
 
@@ -16,6 +16,21 @@ class TicketBase(BaseModel):
 
 class TicketCreate(TicketBase):
     pass
+
+
+class PortfolioLeadIngestion(BaseModel):
+    requestId: str = Field(..., min_length=8, max_length=80)
+    nome: str = Field(..., min_length=2, max_length=150)
+    telefone: str = Field(..., min_length=8, max_length=32)
+    email: Optional[EmailStr] = None
+    origem: Literal["portfolio", "whatsapp", "helpdesk", "automacao"]
+    servicoInteresse: str = Field(..., min_length=3, max_length=160)
+    mensagemOriginal: str = Field(..., min_length=10, max_length=1600)
+    status: Literal["novo", "em_contato", "agendado", "concluido", "perdido"] = "novo"
+    linkOrigem: str = Field(..., min_length=8, max_length=300)
+    criadoEm: datetime
+    proximoPasso: str = Field(..., min_length=5, max_length=240)
+    confirmedByHuman: bool = False
 
 
 class TicketUpdate(BaseModel):
