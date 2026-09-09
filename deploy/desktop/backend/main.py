@@ -15,9 +15,11 @@ from schemas import (
     TicketResponse,
     TicketListResponse,
     HealthResponse,
+    PortfolioLeadIngestion,
 )
 from service import (
     create_ticket,
+    create_ticket_from_portfolio_lead,
     get_ticket,
     get_tickets,
     update_ticket,
@@ -106,6 +108,23 @@ def health_check():
 @app.post("/tickets", response_model=TicketResponse, status_code=201, tags=["Tickets"])
 def create_ticket_endpoint(ticket: TicketCreate, db: Session = Depends(get_db)):
     db_ticket = create_ticket(db, ticket)
+    return db_ticket
+
+
+@app.post("/tickets/from-portfolio", response_model=TicketResponse, status_code=201, tags=["Tickets"])
+def create_ticket_from_portfolio_endpoint(lead: PortfolioLeadIngestion, db: Session = Depends(get_db)):
+    if lead.origem == "automacao" and not lead.confirmedByHuman:
+        raise HTTPException(
+            status_code=403,
+            detail="Lead de automação precisa de confirmação humana antes de virar chamado",
+        )
+    if lead.status in {"concluido", "perdido"}:
+        raise HTTPException(
+            status_code=422,
+            detail="Lead encerrado não deve abrir chamado no Helpdesk",
+        )
+
+    db_ticket = create_ticket_from_portfolio_lead(db, lead)
     return db_ticket
 
 
