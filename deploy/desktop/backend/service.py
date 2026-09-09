@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from models import Ticket, TicketStatus, TicketPriority
-from schemas import TicketCreate, TicketUpdate
+from schemas import PortfolioLeadIngestion, TicketCreate, TicketUpdate
 
 
 def create_ticket(db: Session, ticket: TicketCreate) -> Ticket:
@@ -22,6 +22,46 @@ def create_ticket(db: Session, ticket: TicketCreate) -> Ticket:
     db.commit()
     db.refresh(db_ticket)
     return db_ticket
+
+
+def find_ticket_by_request_id(db: Session, request_id: str) -> Optional[Ticket]:
+    marker = f"Request ID: {request_id}"
+    return db.query(Ticket).filter(Ticket.descricao.contains(marker)).first()
+
+
+def build_ticket_from_portfolio_lead(lead: PortfolioLeadIngestion) -> TicketCreate:
+    origem_label = lead.origem.replace("_", " ").title()
+    descricao = "\n".join(
+        [
+            f"Request ID: {lead.requestId}",
+            f"Telefone: {lead.telefone}",
+            f"Origem: {lead.origem}",
+            f"Status inicial do lead: {lead.status}",
+            f"Criado em: {lead.criadoEm.isoformat()}",
+            f"Link de origem: {lead.linkOrigem}",
+            f"Mensagem: {lead.mensagemOriginal}",
+            f"Próximo passo: {lead.proximoPasso}",
+        ]
+    )
+
+    return TicketCreate(
+        titulo=f"Lead do portfólio: {lead.servicoInteresse}",
+        descricao=descricao,
+        categoria=f"Lead {origem_label}",
+        prioridade=TicketPriority.ALTA if lead.origem == "portfolio" else TicketPriority.MEDIA,
+        solicitante_nome=lead.nome,
+        solicitante_email=lead.email or "sem-email@jose-ivan-ti.local",
+        solicitante_setor=lead.origem,
+    )
+
+
+def create_ticket_from_portfolio_lead(db: Session, lead: PortfolioLeadIngestion) -> Ticket:
+    existing_ticket = find_ticket_by_request_id(db, lead.requestId)
+    if existing_ticket:
+        return existing_ticket
+
+    ticket = build_ticket_from_portfolio_lead(lead)
+    return create_ticket(db, ticket)
 
 
 def get_ticket(db: Session, ticket_id: int) -> Optional[Ticket]:
