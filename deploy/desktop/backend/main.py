@@ -26,7 +26,7 @@ from service import (
     delete_ticket,
     get_ticket_stats,
 )
-from view_filters import filter_tickets_for_view
+from view_filters import build_filter_options, filter_tickets_for_view
 
 app = FastAPI(
     title="Helpdesk API",
@@ -49,6 +49,16 @@ def startup_event():
     init_db()
 
 
+def render_select_options(values: list[str], selected: Optional[str]) -> str:
+    options = ['<option value="">Todos</option>']
+    selected_value = selected or ""
+    for value in values:
+        safe_value = html.escape(value)
+        selected_attr = " selected" if value == selected_value else ""
+        options.append(f'<option value="{safe_value}"{selected_attr}>{safe_value}</option>')
+    return "".join(options)
+
+
 @app.get("/", response_class=HTMLResponse, tags=["Visualização"])
 def view_cases_endpoint(
     origin: Optional[str] = None,
@@ -57,12 +67,28 @@ def view_cases_endpoint(
     db: Session = Depends(get_db),
 ):
     tickets, total = get_tickets(db, skip=0, limit=100)
+    filter_options = build_filter_options(tickets)
     visible_tickets = filter_tickets_for_view(
         tickets,
         origin=origin,
         status=status,
         priority=priority,
     )
+    filter_controls = f"""
+        <form class="filters" method="get" aria-label="Filtros dos casos">
+            <label>Origem
+                <select name="origin">{render_select_options(filter_options.origins, origin)}</select>
+            </label>
+            <label>Status
+                <select name="status">{render_select_options(filter_options.statuses, status)}</select>
+            </label>
+            <label>Prioridade
+                <select name="priority">{render_select_options(filter_options.priorities, priority)}</select>
+            </label>
+            <button type="submit">Filtrar</button>
+            <a href="/">Limpar filtros</a>
+        </form>
+    """
     cards = []
     for ticket in visible_tickets:
         cards.append(
@@ -93,6 +119,11 @@ def view_cases_endpoint(
             h2 { margin: 10px 0; font-size: 1.05rem; }
             p { line-height: 1.45; font-size: .94rem; }
             .summary { color: #cbd5e1; margin: 0; }
+            .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; padding: 14px 16px; max-width: 980px; margin: 0 auto; }
+            .filters label { display: grid; gap: 5px; color: #cbd5e1; font-size: .84rem; }
+            .filters select, .filters button, .filters a { border-radius: 10px; border: 1px solid #334155; padding: 8px 10px; background: #1e293b; color: #e5e7eb; }
+            .filters button { cursor: pointer; background: #0369a1; border-color: #38bdf8; }
+            .filters a { text-decoration: none; }
             .card { background: #1e293b; border: 1px solid #334155; border-left: 6px solid #38bdf8; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px #02061755; }
             .priority-critica { border-left-color: #f97316; }
             .priority-alta { border-left-color: #22c55e; }
@@ -106,6 +137,7 @@ def view_cases_endpoint(
             <h1>Ivan Helpdesk - Casos baseados nas vagas selecionadas</h1>
             <p class="summary">Total de casos: """ + str(total) + """. Status externo: confirmação/protocolo ainda pendente.</p>
         </header>
+        """ + filter_controls + """
         <main>""" + "\n".join(cards) + """</main>
     </body>
     </html>

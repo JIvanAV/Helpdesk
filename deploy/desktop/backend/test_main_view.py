@@ -66,6 +66,19 @@ class HelpdeskMainViewTest(unittest.TestCase):
         self.assertNotIn("Rotina de vagas", response.text)
         self.assertNotIn("Caso encerrado", response.text)
 
+    def test_home_view_renders_filter_controls(self):
+        self.create_case("Lead do portfólio", "portfolio", TicketStatus.ABERTO, TicketPriority.ALTA)
+        self.create_case("Rotina de vagas", "automacao", TicketStatus.EM_ANDAMENTO, TicketPriority.MEDIA)
+
+        response = self.client.get("/?origin=portfolio&status=ABERTO&priority=ALTA")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('aria-label="Filtros dos casos"', response.text)
+        self.assertIn('<option value="portfolio" selected>portfolio</option>', response.text)
+        self.assertIn('<option value="ABERTO" selected>ABERTO</option>', response.text)
+        self.assertIn('<option value="ALTA" selected>ALTA</option>', response.text)
+        self.assertIn('href="/"', response.text)
+
 
 if __name__ == "__main__":
     unittest.main()
