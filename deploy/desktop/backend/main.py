@@ -104,6 +104,16 @@ def view_cases_endpoint(
             </article>
             """
         )
+    if not cards:
+        cards.append(
+            """
+            <article class="card empty-state">
+                <h2>Nenhum caso encontrado com estes filtros</h2>
+                <p>Limpe os filtros ou escolha outra origem, status ou prioridade para revisar os chamados.</p>
+            </article>
+            """
+        )
+
     return """
     <!doctype html>
     <html lang="pt-BR">
@@ -125,6 +135,7 @@ def view_cases_endpoint(
             .filters button { cursor: pointer; background: #0369a1; border-color: #38bdf8; }
             .filters a { text-decoration: none; }
             .card { background: #1e293b; border: 1px solid #334155; border-left: 6px solid #38bdf8; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px #02061755; }
+            .empty-state { border-left-color: #94a3b8; }
             .priority-critica { border-left-color: #f97316; }
             .priority-alta { border-left-color: #22c55e; }
             .meta { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -135,7 +146,7 @@ def view_cases_endpoint(
     <body>
         <header>
             <h1>Ivan Helpdesk - Casos baseados nas vagas selecionadas</h1>
-            <p class="summary">Total de casos: """ + str(total) + """. Status externo: confirmação/protocolo ainda pendente.</p>
+            <p class="summary">Exibindo """ + str(len(visible_tickets)) + """ de """ + str(total) + """ casos. Status externo: confirmação/protocolo ainda pendente.</p>
         </header>
         """ + filter_controls + """
         <main>""" + "\n".join(cards) + """</main>

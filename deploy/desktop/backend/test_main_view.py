@@ -79,6 +79,15 @@ class HelpdeskMainViewTest(unittest.TestCase):
         self.assertIn('<option value="ALTA" selected>ALTA</option>', response.text)
         self.assertIn('href="/"', response.text)
 
+    def test_home_view_explains_when_filters_have_no_results(self):
+        self.create_case("Lead do portfólio", "portfolio", TicketStatus.ABERTO, TicketPriority.ALTA)
+
+        response = self.client.get("/?origin=automacao")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Nenhum caso encontrado com estes filtros", response.text)
+        self.assertIn("Exibindo 0 de 1 casos", response.text)
+
 
 if __name__ == "__main__":
     unittest.main()
