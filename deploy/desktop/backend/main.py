@@ -26,6 +26,7 @@ from service import (
     delete_ticket,
     get_ticket_stats,
 )
+from view_filters import filter_tickets_for_view
 
 app = FastAPI(
     title="Helpdesk API",
@@ -49,10 +50,21 @@ def startup_event():
 
 
 @app.get("/", response_class=HTMLResponse, tags=["Visualização"])
-def view_cases_endpoint(db: Session = Depends(get_db)):
+def view_cases_endpoint(
+    origin: Optional[str] = None,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
     tickets, total = get_tickets(db, skip=0, limit=100)
+    visible_tickets = filter_tickets_for_view(
+        tickets,
+        origin=origin,
+        status=status,
+        priority=priority,
+    )
     cards = []
-    for ticket in tickets:
+    for ticket in visible_tickets:
         cards.append(
             f"""
             <article class="card priority-{html.escape(ticket.prioridade.value.lower())}">
