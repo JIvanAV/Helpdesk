@@ -2,12 +2,15 @@ import html
 
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime
 
 from database import get_db, init_db
+from docs_security import verify_docs_access
 from models import Ticket, TicketStatus, TicketPriority
 from schemas import (
     TicketCreate,
@@ -29,9 +32,12 @@ from service import (
 from view_filters import build_filter_options, filter_tickets_for_view
 
 app = FastAPI(
-    title="Helpdesk API",
+    title="Ivan Helpdesk API",
     description="Sistema de Helpdesk / Service Desk para gerenciamento de chamados",
     version="1.0.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 # CORS configuration
@@ -47,6 +53,32 @@ app.add_middleware(
 @app.on_event("startup")
 def startup_event():
     init_db()
+
+
+@app.get("/docs", include_in_schema=False)
+def protected_swagger_docs(
+    key: Optional[str] = None,
+    _: None = Depends(verify_docs_access),
+):
+    openapi_url = "/openapi.json"
+    if key:
+        openapi_url = f"{openapi_url}?key={key}"
+
+    return get_swagger_ui_html(
+        openapi_url=openapi_url,
+        title="Ivan Helpdesk API - Documentação",
+    )
+
+
+@app.get("/openapi.json", include_in_schema=False)
+def protected_openapi_schema(_: None = Depends(verify_docs_access)):
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    return JSONResponse(schema)
 
 
 def render_select_options(values: list[str], selected: Optional[str]) -> str:
