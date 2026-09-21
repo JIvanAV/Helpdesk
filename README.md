@@ -38,8 +38,25 @@ uv run --with-requirements deploy/desktop/backend/requirements.txt \
 Depois abra:
 
 - Visualização dos casos: <http://127.0.0.1:8000/>
-- Documentação Swagger: <http://127.0.0.1:8000/docs>
+- Documentação Swagger protegida: <http://127.0.0.1:8000/docs?key=local-dev-docs>
 - Health check: <http://127.0.0.1:8000/health>
+
+## Documentação protegida
+
+A documentação interativa continua disponível no Swagger, mas agora exige uma chave simples para evitar exposição acidental quando o Helpdesk for publicado por túnel ou demonstração.
+
+- Chave local padrão: `local-dev-docs`.
+- Variável recomendada para uso real: `HELPDESK_DOCS_KEY`.
+- A chave pode ir na query string (`/docs?key=...`) ou no cabeçalho `X-Helpdesk-Docs-Key` para chamadas técnicas.
+- O contrato OpenAPI em `/openapi.json` usa a mesma proteção.
+
+Exemplo com uma chave definida:
+
+```bash
+HELPDESK_DOCS_KEY='troque-esta-chave' \
+uv run --with-requirements deploy/desktop/backend/requirements.txt \
+  uvicorn main:app --app-dir deploy/desktop/backend --host 127.0.0.1 --port 8000
+```
 
 ## Como rodar os testes
 
