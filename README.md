@@ -86,3 +86,4 @@ uv run --with-requirements deploy/desktop/backend/requirements.txt \
 - Leads vindos de automação exigem confirmação humana antes de virar chamado.
 - Casos de vaga/prospecção devem deixar claro quando a confirmação externa ainda está pendente.
 - O banco local fica em `deploy/desktop/data/helpdesk.db` e pode ser recriado em ambiente de teste.
+## Manutenção - 22/09/26
