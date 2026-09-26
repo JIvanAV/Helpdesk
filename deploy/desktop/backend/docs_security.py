@@ -1,4 +1,5 @@
 import os
+import logging
 from hmac import compare_digest
 from typing import Optional
 
@@ -7,6 +8,7 @@ from fastapi import Header, HTTPException, Query, status
 DOCS_ACCESS_KEY_ENV = "HELPDESK_DOCS_KEY"
 DOCS_ACCESS_HEADER = "X-Helpdesk-Docs-Key"
 DEFAULT_LOCAL_DOCS_KEY = "local-dev-docs"
+logger = logging.getLogger("ivan_helpdesk.docs_security")
 
 
 def get_docs_access_key() -> str:
@@ -28,6 +30,7 @@ def verify_docs_access(
     expected_key = get_docs_access_key()
 
     if not compare_digest(provided_key, expected_key):
+        logger.warning("Tentativa bloqueada de acesso à documentação do Helpdesk")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Chave da documentação inválida ou ausente",
