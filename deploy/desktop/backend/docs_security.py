@@ -21,7 +21,7 @@ def get_docs_access_key() -> str:
 
 def verify_docs_access(
     docs_key: Optional[str] = Query(default=None, alias="key"),
-    header_key: Optional[str] = Header(default=None, alias="X-Helpdesk-Docs-Key"),
+    header_key: Optional[str] = Header(..., alias="X-Helpdesk-Docs-Key"),
 ) -> None:
     provided_key = header_key or docs_key or ""
     expected_key = get_docs_access_key()
