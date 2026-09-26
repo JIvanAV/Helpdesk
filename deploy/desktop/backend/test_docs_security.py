@@ -25,12 +25,21 @@ class HelpdeskDocsSecurityTest(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json()["detail"], "Chave da documentação inválida ou ausente")
 
-    def test_serves_swagger_with_query_key(self):
+    def test_blocks_swagger_with_query_key_only(self):
         response = self.client.get("/docs?key=entrevista-tecnica")
+
+        self.assertEqual(response.status_code, 422)
+
+    def test_serves_swagger_with_header_key(self):
+        response = self.client.get(
+            "/docs",
+            headers={"X-Helpdesk-Docs-Key": "entrevista-tecnica"},
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("Ivan Helpdesk API - Documentação", response.text)
-        self.assertIn("/openapi.json?key=entrevista-tecnica", response.text)
+        self.assertIn("/openapi.json", response.text)
+        self.assertNotIn("entrevista-tecnica", response.text)
 
     def test_serves_openapi_with_header_key(self):
         response = self.client.get(
@@ -46,7 +55,10 @@ class HelpdeskDocsSecurityTest(unittest.TestCase):
     def test_uses_local_fallback_for_clean_dev_machine(self):
         os.environ.pop("HELPDESK_DOCS_KEY", None)
 
-        response = self.client.get(f"/openapi.json?key={DEFAULT_LOCAL_DOCS_KEY}")
+        response = self.client.get(
+            "/openapi.json",
+            headers={"X-Helpdesk-Docs-Key": DEFAULT_LOCAL_DOCS_KEY},
+        )
 
         self.assertEqual(response.status_code, 200)
 
