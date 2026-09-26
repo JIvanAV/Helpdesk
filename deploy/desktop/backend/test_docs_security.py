@@ -22,8 +22,8 @@ class HelpdeskDocsSecurityTest(unittest.TestCase):
     def test_blocks_swagger_without_key(self):
         response = self.client.get("/docs")
 
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json()["detail"], "Chave da documentação inválida ou ausente")
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["detail"][0]["loc"], ["header", "X-Helpdesk-Docs-Key"])
 
     def test_blocks_swagger_with_query_key_only(self):
         response = self.client.get("/docs?key=entrevista-tecnica")

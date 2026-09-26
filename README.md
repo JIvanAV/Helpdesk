@@ -38,7 +38,7 @@ uv run --with-requirements deploy/desktop/backend/requirements.txt \
 Depois abra:
 
 - Visualização dos casos: <http://127.0.0.1:8000/>
-- Documentação Swagger protegida: <http://127.0.0.1:8000/docs?key=local-dev-docs>
+- Documentação Swagger protegida: <http://127.0.0.1:8000/docs> usando o cabeçalho `X-Helpdesk-Docs-Key: local-dev-docs`.
 - Health check: <http://127.0.0.1:8000/health>
 
 ## Documentação protegida
@@ -47,8 +47,14 @@ A documentação interativa continua disponível no Swagger, mas agora exige uma
 
 - Chave local padrão: `local-dev-docs`.
 - Variável recomendada para uso real: `HELPDESK_DOCS_KEY`.
-- A chave pode ir na query string (`/docs?key=...`) ou no cabeçalho `X-Helpdesk-Docs-Key` para chamadas técnicas.
+- A chave deve ir no cabeçalho `X-Helpdesk-Docs-Key`. Evite query string para não gravar segredo em histórico, logs ou URL compartilhada.
 - O contrato OpenAPI em `/openapi.json` usa a mesma proteção.
+
+Exemplo de validação técnica:
+
+```bash
+curl -H 'X-Helpdesk-Docs-Key: local-dev-docs' http://127.0.0.1:8000/openapi.json
+```
 
 Exemplo com uma chave definida:
 
