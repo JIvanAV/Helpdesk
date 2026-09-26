@@ -57,16 +57,14 @@ def startup_event():
 
 @app.get("/docs", include_in_schema=False)
 def protected_swagger_docs(
-    key: Optional[str] = None,
     _: None = Depends(verify_docs_access),
 ):
-    openapi_url = "/openapi.json"
-    if key:
-        openapi_url = f"{openapi_url}?key={key}"
-
     return get_swagger_ui_html(
-        openapi_url=openapi_url,
+        openapi_url="/openapi.json",
         title="Ivan Helpdesk API - Documentação",
+        swagger_ui_parameters={
+            "persistAuthorization": True,
+        },
     )
 
 
