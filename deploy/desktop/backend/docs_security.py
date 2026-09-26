@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import Header, HTTPException, Query, status
 
 DOCS_ACCESS_KEY_ENV = "HELPDESK_DOCS_KEY"
+DOCS_ACCESS_HEADER = "X-Helpdesk-Docs-Key"
 DEFAULT_LOCAL_DOCS_KEY = "local-dev-docs"
 
 
@@ -21,7 +22,7 @@ def get_docs_access_key() -> str:
 
 def verify_docs_access(
     docs_key: Optional[str] = Query(default=None, alias="key"),
-    header_key: Optional[str] = Header(..., alias="X-Helpdesk-Docs-Key"),
+    header_key: Optional[str] = Header(..., alias=DOCS_ACCESS_HEADER),
 ) -> None:
     provided_key = header_key or docs_key or ""
     expected_key = get_docs_access_key()
