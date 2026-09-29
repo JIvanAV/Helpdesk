@@ -88,6 +88,20 @@ class HelpdeskMainViewTest(unittest.TestCase):
         self.assertIn("Nenhum caso encontrado com estes filtros", response.text)
         self.assertIn("Exibindo 0 de 1 casos", response.text)
 
+    def test_home_view_renders_daily_triage_summary(self):
+        self.create_case("Lead do portfólio", "portfolio", TicketStatus.ABERTO, TicketPriority.ALTA)
+        self.create_case("Caso aguardando", "helpdesk", TicketStatus.AGUARDANDO_USUARIO, TicketPriority.MEDIA)
+
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('aria-label="Resumo de triagem diária"', response.text)
+        self.assertIn("Triagem diária", response.text)
+        self.assertIn("Alta/crítica", response.text)
+        self.assertIn("Leads do portfólio", response.text)
+        self.assertIn("Próximo passo", response.text)
+        self.assertIn("Revise os casos abertos", response.text)
+
 
 if __name__ == "__main__":
     unittest.main()
