@@ -107,9 +107,9 @@ def view_cases_endpoint(
         priority=priority,
     )
     triage_message = (
-        "Há casos abertos para acompanhar hoje."
+        "Revise os casos abertos, priorize alta/crítica e registre o próximo contato."
         if triage.has_work
-        else "Não há casos abertos no momento; mantenha o painel pronto para novos leads."
+        else "Sem casos abertos agora; mantenha o painel pronto para novos leads."
     )
     triage_panel = f"""
         <section class="triage" aria-label="Resumo de triagem diária">
@@ -172,7 +172,7 @@ def view_cases_endpoint(
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Ivan Helpdesk - Casos de candidaturas</title>
+        <title>Ivan Helpdesk - Triagem de atendimentos</title>
         <style>
             body { font-family: Arial, sans-serif; margin: 0; background: #0f172a; color: #e5e7eb; }
             header { padding: 22px 16px; background: #111827; border-bottom: 1px solid #334155; }
@@ -196,7 +196,7 @@ def view_cases_endpoint(
             .card { background: #1e293b; border: 1px solid #334155; border-left: 6px solid #38bdf8; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px #02061755; }
             .empty-state { border-left-color: #94a3b8; }
             .priority-critica { border-left-color: #f97316; }
-            .priority-alta { border-left-color: #22c55e; }
+            .priority-alta { border-left-color: #facc15; }
             .meta { display: flex; gap: 8px; flex-wrap: wrap; }
             .meta span { background: #0f172a; color: #bae6fd; border: 1px solid #334155; border-radius: 999px; padding: 4px 9px; font-size: .78rem; }
             a { color: #7dd3fc; }
@@ -204,8 +204,8 @@ def view_cases_endpoint(
     </head>
     <body>
         <header>
-            <h1>Ivan Helpdesk - Casos baseados nas vagas selecionadas</h1>
-            <p class="summary">Exibindo """ + str(len(visible_tickets)) + """ de """ + str(total) + """ casos. Status externo: confirmação/protocolo ainda pendente.</p>
+            <h1>Ivan Helpdesk - Triagem de atendimentos</h1>
+            <p class="summary">Exibindo """ + str(len(visible_tickets)) + """ de """ + str(total) + """ casos. Use a triagem para decidir contato, prioridade e próximo passo.</p>
         </header>
         """ + triage_panel + """
         """ + filter_controls + """
