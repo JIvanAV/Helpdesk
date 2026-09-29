@@ -29,6 +29,7 @@ from service import (
     delete_ticket,
     get_ticket_stats,
 )
+from triage import build_triage_summary
 from view_filters import build_filter_options, filter_tickets_for_view
 
 app = FastAPI(
@@ -98,12 +99,33 @@ def view_cases_endpoint(
 ):
     tickets, total = get_tickets(db, skip=0, limit=100)
     filter_options = build_filter_options(tickets)
+    triage = build_triage_summary(tickets)
     visible_tickets = filter_tickets_for_view(
         tickets,
         origin=origin,
         status=status,
         priority=priority,
     )
+    triage_message = (
+        "Há casos abertos para acompanhar hoje."
+        if triage.has_work
+        else "Não há casos abertos no momento; mantenha o painel pronto para novos leads."
+    )
+    triage_panel = f"""
+        <section class="triage" aria-label="Resumo de triagem diária">
+            <div class="triage-heading">
+                <strong>Triagem diária</strong>
+                <span>{html.escape(triage_message)}</span>
+            </div>
+            <dl class="triage-grid">
+                <div><dt>Total</dt><dd>{triage.total_cases}</dd></div>
+                <div><dt>Abertos</dt><dd>{triage.open_cases}</dd></div>
+                <div><dt>Alta/crítica</dt><dd>{triage.attention_cases}</dd></div>
+                <div><dt>Leads do portfólio</dt><dd>{triage.portfolio_leads}</dd></div>
+                <div><dt>Próximo passo</dt><dd>{triage.waiting_follow_up}</dd></div>
+            </dl>
+        </section>
+    """
     filter_controls = f"""
         <form class="filters" method="get" aria-label="Filtros dos casos">
             <label>Origem
@@ -159,6 +181,13 @@ def view_cases_endpoint(
             h2 { margin: 10px 0; font-size: 1.05rem; }
             p { line-height: 1.45; font-size: .94rem; }
             .summary { color: #cbd5e1; margin: 0; }
+            .triage { padding: 16px; max-width: 980px; margin: 0 auto; }
+            .triage-heading { display: grid; gap: 4px; margin-bottom: 10px; color: #cbd5e1; }
+            .triage-heading strong { color: #f8fafc; font-size: 1rem; }
+            .triage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin: 0; }
+            .triage-grid div { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 12px; }
+            .triage-grid dt { color: #bae6fd; font-size: .78rem; margin-bottom: 5px; }
+            .triage-grid dd { margin: 0; color: #f8fafc; font-size: 1.45rem; font-weight: 700; }
             .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; padding: 14px 16px; max-width: 980px; margin: 0 auto; }
             .filters label { display: grid; gap: 5px; color: #cbd5e1; font-size: .84rem; }
             .filters select, .filters button, .filters a { border-radius: 10px; border: 1px solid #334155; padding: 8px 10px; background: #1e293b; color: #e5e7eb; }
@@ -178,6 +207,7 @@ def view_cases_endpoint(
             <h1>Ivan Helpdesk - Casos baseados nas vagas selecionadas</h1>
             <p class="summary">Exibindo """ + str(len(visible_tickets)) + """ de """ + str(total) + """ casos. Status externo: confirmação/protocolo ainda pendente.</p>
         </header>
+        """ + triage_panel + """
         """ + filter_controls + """
         <main>""" + "\n".join(cards) + """</main>
     </body>
