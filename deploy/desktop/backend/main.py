@@ -127,7 +127,7 @@ def view_cases_endpoint(
         </section>
     """
     filter_controls = f"""
-        <form class="filters" method="get" aria-label="Filtros dos casos">
+        <form class="filters mobile-friendly-filters" method="get" aria-label="Filtros dos casos">
             <label>Origem
                 <select name="origin">{render_select_options(filter_options.origins, origin)}</select>
             </label>
@@ -190,9 +190,13 @@ def view_cases_endpoint(
             .triage-grid dd { margin: 0; color: #f8fafc; font-size: 1.45rem; font-weight: 700; }
             .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; padding: 14px 16px; max-width: 980px; margin: 0 auto; }
             .filters label { display: grid; gap: 5px; color: #cbd5e1; font-size: .84rem; }
-            .filters select, .filters button, .filters a { border-radius: 10px; border: 1px solid #334155; padding: 8px 10px; background: #1e293b; color: #e5e7eb; }
+            .filters select, .filters button, .filters a { border-radius: 10px; border: 1px solid #334155; padding: 8px 10px; min-height: 44px; background: #1e293b; color: #e5e7eb; touch-action: manipulation; }
             .filters button { cursor: pointer; background: #0369a1; border-color: #38bdf8; }
-            .filters a { text-decoration: none; }
+            .filters a { display: inline-flex; align-items: center; text-decoration: none; }
+            @media (max-width: 560px) {
+                .mobile-friendly-filters { display: grid; grid-template-columns: 1fr; align-items: stretch; }
+                .mobile-friendly-filters label, .mobile-friendly-filters button, .mobile-friendly-filters a { width: 100%; box-sizing: border-box; }
+            }
             .card { background: #1e293b; border: 1px solid #334155; border-left: 6px solid #38bdf8; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px #02061755; }
             .empty-state { border-left-color: #94a3b8; }
             .priority-critica { border-left-color: #f97316; }

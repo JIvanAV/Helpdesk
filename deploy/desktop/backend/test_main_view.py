@@ -102,6 +102,17 @@ class HelpdeskMainViewTest(unittest.TestCase):
         self.assertIn("Próximo passo", response.text)
         self.assertIn("Revise os casos abertos", response.text)
 
+    def test_home_view_keeps_filters_comfortable_on_mobile(self):
+        self.create_case("Lead do portfólio", "portfolio", TicketStatus.ABERTO, TicketPriority.ALTA)
+
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('class="filters mobile-friendly-filters"', response.text)
+        self.assertIn("min-height: 44px", response.text)
+        self.assertIn("touch-action: manipulation", response.text)
+        self.assertIn("@media (max-width: 560px)", response.text)
+
 
 if __name__ == "__main__":
     unittest.main()
