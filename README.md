@@ -86,6 +86,17 @@ uv run --with-requirements deploy/desktop/backend/requirements.txt \
 | `GET` | `/tickets/stats/summary` | Ver resumo por status e prioridade. |
 | `POST` | `/tickets/from-portfolio` | Criar/reaproveitar chamado a partir de lead validado do portfólio. |
 
+## Revisão mobile da tela de triagem
+
+A rota `/` também deve funcionar bem como painel rápido no celular, porque ela costuma ser aberta por link temporário durante testes e demonstrações.
+
+Checklist simples:
+
+1. Abrir a tela de **Triagem diária** e conferir se os números continuam legíveis.
+2. Usar os **Filtros** de origem, status e prioridade sem precisar dar zoom.
+3. Revisar os **cards de chamados** e confirmar que título, descrição e etiquetas quebram linha sem rolagem horizontal.
+4. Limpar filtros e voltar para a lista geral antes de compartilhar o link com alguém.
+
 ## Cuidados de uso
 
 - Não commitar banco SQLite real, `.env`, tokens ou dados pessoais de clientes.
