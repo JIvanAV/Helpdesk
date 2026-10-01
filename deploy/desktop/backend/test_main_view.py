@@ -113,6 +113,17 @@ class HelpdeskMainViewTest(unittest.TestCase):
         self.assertIn("touch-action: manipulation", response.text)
         self.assertIn("@media (max-width: 560px)", response.text)
 
+    def test_home_view_keeps_ticket_cards_readable_on_mobile(self):
+        self.create_case("Lead do portfólio", "portfolio", TicketStatus.ABERTO, TicketPriority.ALTA)
+
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('class="card ticket-card priority-alta"', response.text)
+        self.assertIn("overflow-wrap: anywhere", response.text)
+        self.assertIn(".ticket-card h2", response.text)
+        self.assertIn("font-size: clamp(1rem, 4vw, 1.08rem)", response.text)
+
 
 if __name__ == "__main__":
     unittest.main()

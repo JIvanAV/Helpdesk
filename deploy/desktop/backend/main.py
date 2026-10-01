@@ -145,7 +145,7 @@ def view_cases_endpoint(
     for ticket in visible_tickets:
         cards.append(
             f"""
-            <article class="card priority-{html.escape(ticket.prioridade.value.lower())}">
+            <article class="card ticket-card priority-{html.escape(ticket.prioridade.value.lower())}">
                 <div class="meta">
                     <span>{html.escape(ticket.solicitante_setor or 'Plataforma')}</span>
                     <span>{html.escape(ticket.prioridade.value)}</span>
@@ -198,6 +198,8 @@ def view_cases_endpoint(
                 .mobile-friendly-filters label, .mobile-friendly-filters button, .mobile-friendly-filters a { width: 100%; box-sizing: border-box; }
             }
             .card { background: #1e293b; border: 1px solid #334155; border-left: 6px solid #38bdf8; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px #02061755; }
+            .ticket-card { overflow-wrap: anywhere; }
+            .ticket-card h2 { font-size: clamp(1rem, 4vw, 1.08rem); line-height: 1.3; }
             .empty-state { border-left-color: #94a3b8; }
             .priority-critica { border-left-color: #f97316; }
             .priority-alta { border-left-color: #facc15; }
