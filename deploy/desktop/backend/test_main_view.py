@@ -124,6 +124,16 @@ class HelpdeskMainViewTest(unittest.TestCase):
         self.assertIn(".ticket-card h2", response.text)
         self.assertIn("font-size: clamp(1rem, 4vw, 1.08rem)", response.text)
 
+    def test_home_view_keeps_triage_grid_safe_on_small_screens(self):
+        self.create_case("Lead do portfólio", "portfolio", TicketStatus.ABERTO, TicketPriority.ALTA)
+
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr))", response.text)
+        self.assertIn("font-size: clamp(1.28rem, 8vw, 1.45rem)", response.text)
+        self.assertIn("padding: clamp(18px, 5vw, 24px) 16px", response.text)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -175,7 +175,7 @@ def view_cases_endpoint(
         <title>Ivan Helpdesk - Triagem de atendimentos</title>
         <style>
             body { font-family: Arial, sans-serif; margin: 0; background: #0f172a; color: #e5e7eb; }
-            header { padding: 22px 16px; background: #111827; border-bottom: 1px solid #334155; }
+            header { padding: clamp(18px, 5vw, 24px) 16px; background: #111827; border-bottom: 1px solid #334155; }
             main { padding: 16px; display: grid; gap: 14px; max-width: 980px; margin: 0 auto; }
             h1 { margin: 0 0 8px; font-size: 1.45rem; }
             h2 { margin: 10px 0; font-size: 1.05rem; }
@@ -184,10 +184,10 @@ def view_cases_endpoint(
             .triage { padding: 16px; max-width: 980px; margin: 0 auto; }
             .triage-heading { display: grid; gap: 4px; margin-bottom: 10px; color: #cbd5e1; }
             .triage-heading strong { color: #f8fafc; font-size: 1rem; }
-            .triage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin: 0; }
+            .triage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 10px; margin: 0; }
             .triage-grid div { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 12px; }
             .triage-grid dt { color: #bae6fd; font-size: .78rem; margin-bottom: 5px; }
-            .triage-grid dd { margin: 0; color: #f8fafc; font-size: 1.45rem; font-weight: 700; }
+            .triage-grid dd { margin: 0; color: #f8fafc; font-size: clamp(1.28rem, 8vw, 1.45rem); font-weight: 700; }
             .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; padding: 14px 16px; max-width: 980px; margin: 0 auto; }
             .filters label { display: grid; gap: 5px; color: #cbd5e1; font-size: .84rem; }
             .filters select, .filters button, .filters a { border-radius: 10px; border: 1px solid #334155; padding: 8px 10px; min-height: 44px; background: #1e293b; color: #e5e7eb; touch-action: manipulation; }
